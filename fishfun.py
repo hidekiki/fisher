@@ -424,29 +424,100 @@ def dbk(k): # return an array of the derivatives of P wrt to each param for give
 
     return [ dbkpar(k,x) for x in allparam ]
 
+
 def compute_dbfid(): #computes the derivatives of p wrt each param over the list of k
     global dbfid
-    
+
     if os.path.isfile(modelhere+'/temp/dbfid_'+shapehere+'.npz') and recdbfid == "no":
         data = np.load(modelhere+'/temp/dbfid_'+shapehere+'.npz')
         dbfid = data['dbfid'].tolist()
         data.close()
-        print "dbfid loaded"
-        #print dbfid
-    else :
-        print datetime.datetime.now()
-        print "computing dbfid (dB/dlambda)"
-        global ntri
-        ntri = 0;
         
-        poolB = multiprocessing.Pool(processes=ncores); # start a multiprocess
-        dbfid = poolB.map(dbk, trianglelist)
+        if len(dbfid) == len(trianglelist):
+            print "dbfid loaded"
+    
+#        print " len dbfid "
+#        print len(dbfid)
+
+        else :
+            print datetime.datetime.now()
+            if len(dbfid) > 0:
+                print "continuing dbfid computation"
+                tmin = len(dbfid)
+            else:
+                print "computing dbfid (dB/dlambda)"
+                dbfid = [] # accumulates the result
+                tmin = 0
+
+            poolB = multiprocessing.Pool(processes=ncores); # start a multiprocess
+        
+            chuncksize = 1 # divide the triangle list in chuncks of size "chuncksize". carefull not to change the chuncksize between runs!
+        
+        print len(dbfid)
+        
+        print (len(dbfid)/chuncksize)
+        
+        for i in range((len(dbfid)/chuncksize),1+int((len(trianglelist)/chuncksize)//1)):
+            
+            print len(dbfid)
+        
+            print (len(dbfid)/chuncksize)
+            
+            print "chunck %i out of %i " % (1+i,1+int((len(trianglelist)/chuncksize)//1))
+            
+            if (i+1)*chuncksize > len(trianglelist):
+                tmax = len(trianglelist)
+            else :
+                tmax = (i+1)*chuncksize
+            
+            listhere=trianglelist[tmin:tmax] # returns the (tmin+1) element of the list up to tmax'th element
+    
+            dbfidhere = poolB.map(dbk, listhere)
+            
+            print dbfidhere
+            
+            dbfid.append(dbfidhere)
+            
+            print dbfid
+
+            np.savez(modelhere+'/temp/dbfid_'+shapehere+'.npz',dbfid=np.asarray(dbfid))
+            
+            tmin = i*chuncksize # set the minimum for the next chunck
+    
+            print "chunck %i done" % (i+1)
+        
         poolB.close()
         
         #print dbfid
         print datetime.datetime.now()
         print "dbfid done"
-        np.savez(modelhere+'/temp/dbfid_'+shapehere+'.npz',dbfid=np.asarray(dbfid))
+
+
+
+
+#def compute_dbfid(): #computes the derivatives of p wrt each param over the list of k
+#    global dbfid
+#    
+#    if os.path.isfile(modelhere+'/temp/dbfid_'+shapehere+'.npz') and recdbfid == "no":
+#        data = np.load(modelhere+'/temp/dbfid_'+shapehere+'.npz')
+#        dbfid = data['dbfid'].tolist()
+#        data.close()
+#        print "dbfid loaded"
+#        #print dbfid
+#    else :
+#        print datetime.datetime.now()
+#        print "computing dbfid (dB/dlambda)"
+#        global ntri
+#        ntri = 0;
+#        
+#        poolB = multiprocessing.Pool(processes=ncores); # start a multiprocess
+#        dbfid = poolB.map(dbk, trianglelist)
+#        poolB.close()
+#        
+#        #print dbfid
+#        print datetime.datetime.now()
+#        print "dbfid done"
+#        np.savez(modelhere+'/temp/dbfid_'+shapehere+'.npz',dbfid=np.asarray(dbfid))
 
 def F_BB() : #computes the fisher with bispectrum data
     
