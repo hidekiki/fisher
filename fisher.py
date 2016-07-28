@@ -42,11 +42,16 @@ allfiducial = [0.,1.51,0.00871,9.38,16.62,74.17,-15.17,-13.09,5.76,1.6]# 10^13 m
 allpriors = [0.,0.,0.,0.,0.,0.,0.,0.,0.,0.] # priors
 
 # all the models and combinations of data that we want to compute. for shape and data it's possible to specify more than 1 element : all combinations will be computed
-models=[[["local",],["P","B","P+B"],[1., 1., 1., 1., 1., 1.,1., 1., 1., 1.],1.,0.16],
-        [["equilateral",],["P","B","P+B"],[1., 1., 1., 1., 1., 1.,1., 1., 1., 1.],1.,0.16]
+#models=[[["local",],["P","B","P+B"],[1., 1., 1., 1., 1., 1.,1., 1., 1., 1.],1.,0.16,"full"],
+#       [["equilateral",],["P","B","P+B"],[1., 1., 1., 1., 1., 1.,1., 1., 1., 1.],1.,0.16,"full"]
+#        ] #shape, data, parameters , n, kmax
+
+# all the models and combinations of data that we want to compute. for shape and data it's possible to specify more than 1 element : all combinations will be computed
+models=[[["local",],["P","B","P+B"],[ 1.,1., 1.,0.,0.,0.,0.,0., 1., 1.],1.,0.16],
+        [["equilateral",],["P","B","P+B"],[ 1.,1., 1.,0.,0.,0.,0.,0., 1., 1.],1.,0.16]
         ] #shape, data, parameters , n, kmax
 
-#models=[[["orthogonal","equilateral","local"],["P","B","P+B"],[1., 1., 1., 1., 1., 1.,1., 1., 1., 1.]]] "B","P+B"
+#models=[[["orthogonal"],["P","B","P+B"],[ 1.,1., 1.,0.,0.,0.,0.,0., 1., 1.],1.,0.16,"simple"]]
 
 #########################
 #    Loop over models   #
@@ -57,7 +62,6 @@ for m in models :
     active = m[2] # choose which parameters to include in the model
     nn=m[3] #set n
     kkhigh = m[4] #set kmax
-
     fishfun.initialize(active, allfiducial, allpriors,nn,kkhigh); # initialization
     fishfun.model_output()
     param = fishfun.param # for convienience
