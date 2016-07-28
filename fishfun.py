@@ -17,6 +17,8 @@ from tempfile import TemporaryFile
 import os.path
 from numpy import linalg, pi, sin
 
+from extras import Survey
+
 E = np.exp(1.)
 
 # for integration loops and parallel
@@ -28,17 +30,8 @@ ni = 2; #number iterations
 ne = 2000; #number of evaluations
 
 #######################
-#  survey parameters  #
+#  survey parameters  # OBSOLETE : now use Survey
 #######################
-#old survey
-#V = 10**10 # volume of the survey in (Mpc/h)^3 1.60354*10**10
-#ng = 0.005 # galaxy density for shot noise in  (h/Mpc)^3 0.000399415
-#
-## triangles configurations over which we will sum over // sum over all ordered combinations
-#kf = ((2.*np.pi)/(V**(1./3.))); # for a 10Gpc^3 survey, took kf = 2PI/cubic root (V) in 1/(Mpc/h)
-#klow =  kf; #0.001
-#khigh = 0.17; # as in sefussati and komatsu 0.2
-
 #new survey
 V = 1.60354*10**10 # volume of the survey in (Mpc/h)^3
 ng = 0.000399415  # galaxy density for shot noise in  (h/Mpc)^3
@@ -47,6 +40,7 @@ ng = 0.000399415  # galaxy density for shot noise in  (h/Mpc)^3
 kf = ((2.*np.pi)/(V**(1./3.))); # for a 10Gpc^3 survey, took kf = 2PI/cubic root (V) in 1/(Mpc/h)
 klow =  kf; #
 khigh = 0.2; # default
+
 
 
 ################
@@ -163,7 +157,7 @@ def initialize(act,allfid,allpri,nn,kkhigh):
     qmax = 5./Rfid
     khigh = kkhigh
     n = nn
-    compute_list()
+#compute_list()
 
 def model_output() :
     print("#############################")
@@ -221,6 +215,7 @@ def T(k) :   # rename for convienience. T relates the initial curvature power sp
 #plt.title('Checking interpolation')
 #plt.show()
 
+
 #######################
 # triangle in the sum #
 #######################
@@ -235,12 +230,13 @@ def compute_list():
     
     if pointlistP == [] :
         pointlistP = np.arange(klow,khigh,kf).tolist() # will be used in the sum for the PP fisher
-
-# generating the list of triangles from k min to kmax with spacing kf
+    
+    # generating the list of triangles from k min to kmax with spacing kf
     if trianglelist ==  [] :
         pointlistB = np.arange(klow,khigh,n*kf).tolist() # will be used in the sum for the PP fisher
         listraw = cartesian((pointlistB, pointlistB, pointlistB))
         trianglelist = [s for s in listraw if ((2*max(s[0],s[1],s[2]) <= s[0]+s[1]+s[2]) and (s[0]<=s[1]<=s[2])   )] # keep only triangle inequality and with sides ordered by increasing length
+
 
 ###################
 # variance and pt #

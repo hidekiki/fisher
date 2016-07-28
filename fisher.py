@@ -29,6 +29,12 @@ import os.path
 
 import fishfun
 
+from extras import Survey
+
+# euclid = Survey(1.60354*10**10,0.000399415,0.001,0.16,1,1)
+euclidlike = Survey(1.60354*10**10,0.000399415,0,0.16,1,1)
+# old = Survey(10**10,0.005,0,0.17,1,1)
+
 
 ##############################################
 #    Parameters for the most general model   # (will be used for all model combinations)

@@ -27,6 +27,8 @@ from pylab import *
 
 import os.path
 
+from extras import Survey
+
 import fishfun
 
 ##############################################
@@ -124,8 +126,12 @@ for m in models :
           
           # print fishfun.B_integrand(fishfun.trianglelist[1],0.1,0.1,[fnlfid ,b10fid, b20fid, b01fid, b11fid, b02fid, chi1fid, w10fid, sigfid, Rfid])
           #fishfun.bkfid([0.1,0.1,0.1])
-
-            fishfun.compute_dpfid()
+        
+            euclid = Survey(10**10,0.0004,0,0.16,1,1)
+            print euclid.V
+            print euclid.kmax
+            euclid.display()
+#fishfun.compute_dpfid()
             quit()
 #            print fishfun.compute_fisher()
         

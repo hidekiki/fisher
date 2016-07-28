@@ -2,7 +2,56 @@ import numpy as np
 import fishfun as ff
 from numpy import linalg
 
-# small functions to set stuff 
+# definition of cartesian product to generate the list of the triangles we want to sum over (http://stackoverflow.com/questions/1208118/using-numpy-to-build-an-array-of-all-combinations-of-two-arrays )
+def cartesian(arrays, out=None):
+    arrays = [np.asarray(x) for x in arrays]
+    dtype = arrays[0].dtype
+    
+    n = np.prod([x.size for x in arrays])
+    if out is None:
+        out = np.zeros([n, len(arrays)], dtype=dtype)
+    
+    m = n / arrays[0].size
+    out[:,0] = np.repeat(arrays[0], m)
+    if arrays[1:]:
+        cartesian(arrays[1:], out=out[0:m,1:])
+        for j in xrange(1, arrays[0].size):
+            out[j*m:(j+1)*m,1:] = out[0:m,1:]
+    return out
+
+
+#######################
+#  the survey class   #
+#######################
+# examples of used parameters
+# euclid = Survey(1.60354*10**10,0.000399415,0.001,0.16,1,1)
+# euclidlike = Survey(1.60354*10**10,0.000399415,0,0.16,1,1)
+# old = Survey(10**10,0.005,0,0.17,1,1)
+
+
+class Survey:
+    
+    def __init__(self, V, ng, kmin, kmax,n, nb):
+        self.V = V # # volume of the survey in (Mpc/h)^3
+        self.ng = ng # 0.000399415  # galaxy density for shot noise in  (h/Mpc)^3
+        self.kf = ((2.*np.pi)/(self.V**(1./3.))) # for a 10Gpc^3 survey, took kf = 2PI/cubic root (V) in 1/(Mpc/h)
+        if kmin < self.kf :
+            self.kmin = self.kf # kmin smaller than kf is set to kf
+        else:
+            self.kmin =  kmin # kmin else
+        self.kmax = kmax # 0.2 # default
+        self.pointlistP = np.arange(self.kmin,self.kmax,n*self.kf).tolist() # list of k values, every n*kf
+        #computes triangle list
+        pointlistB = np.arange(self.kmin,self.kmax,nb*self.kf).tolist()
+        listraw = cartesian((pointlistB, pointlistB, pointlistB))
+        self.trianglelist = [s for s in listraw if ((2*max(s[0],s[1],s[2]) <= s[0]+s[1]+s[2]) and (s[0]<=s[1]<=s[2])   )]
+    
+    def display(self):
+        print "the volume of the survey is %.0f (Mpc/h)^3, kf = %.4f, kmin = %.4f, kmax = %.4f" % (self.V, self.kf, self.kmin, self.kmax)
+    
+    def printtofile(self):
+        print "print to file"
+
 
 
 # takes a parameters and produces a list of 10 values between 0 and 2*values
@@ -79,23 +128,6 @@ def set_shift(shiftedparameter, value) :
 #def a0B(b10,b01) :
 #    return 1 + (2./3.)*pow(Om,5./7.)/b1(0.,b10,b01) + (1./9.)*(pow(Om,5./7.)/b1(0.,b10,b01))**2;
 # here we make a0B non-k dependent to simplify
-
-# definition of cartesian product to generate the list of the triangles we want to sum over (http://stackoverflow.com/questions/1208118/using-numpy-to-build-an-array-of-all-combinations-of-two-arrays )
-def cartesian(arrays, out=None):
-    arrays = [np.asarray(x) for x in arrays]
-    dtype = arrays[0].dtype
-    
-    n = np.prod([x.size for x in arrays])
-    if out is None:
-        out = np.zeros([n, len(arrays)], dtype=dtype)
-    
-    m = n / arrays[0].size
-    out[:,0] = np.repeat(arrays[0], m)
-    if arrays[1:]:
-        cartesian(arrays[1:], out=out[0:m,1:])
-        for j in xrange(1, arrays[0].size):
-            out[j*m:(j+1)*m,1:] = out[0:m,1:]
-    return out
 
 
 #############
