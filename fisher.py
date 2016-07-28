@@ -33,15 +33,12 @@ import fishfun
 ##############################################
 #    Parameters for the most general model   # (will be used for all model combinations)
 ##############################################
-# most general model, set all fid /prior values
+# most general model, set all fid /prior values : no need to edit this in general even when changin model.
 allparamleg = ['f_{NL}','b_{10}','b_{20}','b_{01}','b_{11}','b_{02}','\chi_1','\omega_{10}','\sigma','R'] #has to be the same in the same order as in fishfun
-
 #allfiducial = [0.,1.51,0.00871,0.,0.,0.,0.,0.,5.76,1.6] # all zero except b01 b02
 #allfiducial = [0.,0.454,-0.861,1.87,1.155,3.037,-2.024,-0.4821,5.76,0.8]# 10^12 msun
 allfiducial = [0.,1.51,0.00871,9.38,16.62,74.17,-15.17,-13.09,5.76,1.6]# 10^13 msun fiducial values of parameters ORDER MATTERS
 #allfiducial = [0.,5.36,2.3,48.3,281.6,1864,-150.1,-403.8,5.76,3.6]#10^14 msun
-
-
 allpriors = [0.,0.,0.,0.,0.,0.,0.,0.,0.,0.] # priors
 
 # all the models and combinations of data that we want to compute. for shape and data it's possible to specify more than 1 element : all combinations will be computed
