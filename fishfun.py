@@ -189,7 +189,7 @@ deltac = 1.68
 #  Pk and Tk from CLASS  #
 ##########################
 #importing linear matter power spectrum at z=0 computed from class with plank 2015 param.
-pklin = np.loadtxt('/Users/hideki/Dropbox/phd/fisher/class_public-2.4.3/output/pklin_pk.dat'); # creates an array with arrays of [k, p(k)]
+pklin = np.loadtxt('./pklin_pk.dat'); # creates an array with arrays of [k, p(k)]
 klist = pklin[:,0] # only the k list
 plist = pklin[:,1] # only the p(k) list
 pkint = interpolate.splrep(klist, plist) #cubic spline interpolation of scipy
@@ -199,7 +199,7 @@ def P(k) : # rename for convienience (this is the dimension full power spectrum)
 
 
 # importing and interpolating transfer function of matter : the dimension full power spectrum of delta is then P_delta(k,z) = Tk(z)^2 P_zeta(k) where <zeta(k) zeta(k') > = (2PI)^3 delta(k+k') P_zeta(z_inflation) to P_delta(k,z) which is what we need here as the templates are defined for <zeta zeta zeta >. No further normalization.
-tklin = np.loadtxt('/Users/hideki/Dropbox/phd/fisher/class_public-2.4.3/output/pklin_tk.dat',skiprows=1)
+tklin = np.loadtxt('./pklin_tk.dat',skiprows=1)
 tkint = interpolate.splrep(tklin[:,0], tklin[:,5])
 
 def T(k) :   # rename for convienience. T relates the initial curvature power spectrum (dimension full 2 PI^2 As (k/k_*)^(ns-1) /k^3 T(k)^2 = P_prim T(k)^2 =  P(k)
@@ -435,7 +435,7 @@ def dbkpar(k,par):
     integ = vegas.Integrator([[qmin, qmax], [-1, 1]])
     result = integ(f, nitn=ni, neval = 1.5*ne) # 1 more than the rest
     print result.summary()
-    return result.mean
+    return result.mean()
 
 
 
