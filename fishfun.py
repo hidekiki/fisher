@@ -17,6 +17,8 @@ from tempfile import TemporaryFile
 import os.path
 from numpy import linalg, pi, sin
 
+from extras import Survey
+
 E = np.exp(1.)
 
 # for integration loops and parallel
@@ -28,17 +30,8 @@ ni = 2; #number iterations
 ne = 2000; #number of evaluations
 
 #######################
-#  survey parameters  #
+#  survey parameters  # OBSOLETE : now use Survey
 #######################
-#old survey
-#V = 10**10 # volume of the survey in (Mpc/h)^3 1.60354*10**10
-#ng = 0.005 # galaxy density for shot noise in  (h/Mpc)^3 0.000399415
-#
-## triangles configurations over which we will sum over // sum over all ordered combinations
-#kf = ((2.*np.pi)/(V**(1./3.))); # for a 10Gpc^3 survey, took kf = 2PI/cubic root (V) in 1/(Mpc/h)
-#klow =  kf; #0.001
-#khigh = 0.17; # as in sefussati and komatsu 0.2
-
 #new survey
 V = 1.60354*10**10 # volume of the survey in (Mpc/h)^3
 ng = 0.000399415  # galaxy density for shot noise in  (h/Mpc)^3
@@ -47,6 +40,7 @@ ng = 0.000399415  # galaxy density for shot noise in  (h/Mpc)^3
 kf = ((2.*np.pi)/(V**(1./3.))); # for a 10Gpc^3 survey, took kf = 2PI/cubic root (V) in 1/(Mpc/h)
 klow =  kf; #
 khigh = 0.2; # default
+
 
 
 ################
@@ -81,7 +75,7 @@ allparam=["fnl","b10","b20","b01","b11","b02","chi1","w10","sig","R"]; #ORDER MA
 param = []  # active parameters in the model (all param are in this version)
 fiducial = []
 priors = []
-modelhere = ""
+modelhere = "" # for file naming
 
 fnlfid = 0. # need to put the correct values from main file
 b10fid = 0.
@@ -151,7 +145,10 @@ def initialize(act,allfid,allpri,nn,kkhigh):
     global sw10
     global sR
     global ssig
-    global schi1 #ORDER MATTERS!
+    global schi1
+    #global modelname
+    #modelname = modelnamee # assign which model we want
+    #ORDER MATTERS!
     [fnlfid ,b10fid, b20fid, b01fid, b11fid, b02fid, chi1fid, w10fid, sigfid, Rfid] = allfid #change here
     [snl ,s10, s20, s01, s11, s02,schi1, sw10, ssig ,sR ] = act #set the switches for each parameter
     param = set_active(act,allparam) # set values of active parameters
@@ -160,7 +157,7 @@ def initialize(act,allfid,allpri,nn,kkhigh):
     qmax = 5./Rfid
     khigh = kkhigh
     n = nn
-    compute_list()
+#compute_list()
 
 def model_output() :
     print("#############################")
@@ -192,7 +189,7 @@ deltac = 1.68
 #  Pk and Tk from CLASS  #
 ##########################
 #importing linear matter power spectrum at z=0 computed from class with plank 2015 param.
-pklin = np.loadtxt('/Users/hideki/Dropbox/phd/fisher/class_public-2.4.3/output/pklin_pk.dat'); # creates an array with arrays of [k, p(k)]
+pklin = np.loadtxt('./pklin_pk.dat'); # creates an array with arrays of [k, p(k)]
 klist = pklin[:,0] # only the k list
 plist = pklin[:,1] # only the p(k) list
 pkint = interpolate.splrep(klist, plist) #cubic spline interpolation of scipy
@@ -202,7 +199,7 @@ def P(k) : # rename for convienience (this is the dimension full power spectrum)
 
 
 # importing and interpolating transfer function of matter : the dimension full power spectrum of delta is then P_delta(k,z) = Tk(z)^2 P_zeta(k) where <zeta(k) zeta(k') > = (2PI)^3 delta(k+k') P_zeta(z_inflation) to P_delta(k,z) which is what we need here as the templates are defined for <zeta zeta zeta >. No further normalization.
-tklin = np.loadtxt('/Users/hideki/Dropbox/phd/fisher/class_public-2.4.3/output/pklin_tk.dat',skiprows=1)
+tklin = np.loadtxt('./pklin_tk.dat',skiprows=1)
 tkint = interpolate.splrep(tklin[:,0], tklin[:,5])
 
 def T(k) :   # rename for convienience. T relates the initial curvature power spectrum (dimension full 2 PI^2 As (k/k_*)^(ns-1) /k^3 T(k)^2 = P_prim T(k)^2 =  P(k)
@@ -218,6 +215,7 @@ def T(k) :   # rename for convienience. T relates the initial curvature power sp
 #plt.title('Checking interpolation')
 #plt.show()
 
+
 #######################
 # triangle in the sum #
 #######################
@@ -232,12 +230,13 @@ def compute_list():
     
     if pointlistP == [] :
         pointlistP = np.arange(klow,khigh,kf).tolist() # will be used in the sum for the PP fisher
-
-# generating the list of triangles from k min to kmax with spacing kf
+    
+    # generating the list of triangles from k min to kmax with spacing kf
     if trianglelist ==  [] :
         pointlistB = np.arange(klow,khigh,n*kf).tolist() # will be used in the sum for the PP fisher
         listraw = cartesian((pointlistB, pointlistB, pointlistB))
         trianglelist = [s for s in listraw if ((2*max(s[0],s[1],s[2]) <= s[0]+s[1]+s[2]) and (s[0]<=s[1]<=s[2])   )] # keep only triangle inequality and with sides ordered by increasing length
+
 
 ###################
 # variance and pt #
@@ -271,11 +270,39 @@ def Fshape(k1,k2,k3):
 #########################
 # fisher element for the power spectrum. terms need to be integrated over q and x for each k after fixing the value of the fiducial parameters. // for now this is only the  dP/dlambda factors
 
-# FNLFID IS ALWAYS ZERO NOW
+##importing definitions corresponding to the correct model
+#def load_model(modelname):
+#    if modelname == "full":
+#        from fullmodel import P_integrand as P_modell
+#        global P_integrand
+#        P_integrand = P_modell
+#        from fullmodel import DP_integrand as DP_modell
+#        global DP_integrand
+#        DP_integrand = DP_modell
+#        from fullmodel import B_integrand as B_modell
+#        global B_integrand
+#        B_integrand = B_modell
+#        from fullmodel import DB_integrand as DB_modell
+#        global DB_integrand
+#        DB_integrand = DB_modell
+#    
+#    elif modelname == "simple":
+#        from simplemodel import P_integrand as P_modell
+#        global P_integrand
+#        P_integrand = P_modell
+#        from simplemodel import DP_integrand as DP_modell
+#        global DP_integrand
+#        DP_integrand = DP_modell
+#        from simplemodel import B_integrand as B_modell
+#        global B_integrand
+#        B_integrand = B_modell
+#        from simplemodel import DB_integrand as DB_modell
+#        global DB_integrand
+#        DB_integrand = DB_modell
+#    else :
+#        print "wrong model name"
 
-###### power spectrum ######
-def P_integrand(k,q,x,(fnlfid ,b10fid, b20fid, b01fid, b11fid, b02fid, chi1fid, w10fid, sigfid, Rfid)):
-    return (0.002551020408163265*((196.*(1. + b10fid + b01fid*k**2)**2*P(k))/(qmax - 1.*qmin) + (0.10132118364233778*(7.*q**3*(b20fid + q**2*(2.*b11fid + 2.*chi1fid + q**2*(b02fid + 2.*w10fid))) + 7.*b01fid*k**5*x - 14.*k*q**2*(b20fid + q**2*(3.*b11fid + 3.*chi1fid + 2.*q**2*(b02fid + 2.*w10fid)))*x + 7.*k**4*q*(b11fid + b02fid*q**2 - 1.*q**2*w10fid - 4.*b01fid*x**2 + 3.*q**2*w10fid*x**2) + k**2*q*(3. + 7.*b20fid + 7.*b01fid*q**2 + 21.*b11fid*q**2 + 14.*chi1fid*q**2 + 14.*b02fid*q**4 + 7.*q**4*w10fid - 10.*x**2 - 28.*b01fid*q**2*x**2 + 28.*b11fid*q**2*x**2 + 28.*chi1fid*q**2*x**2 + 28.*b02fid*q**4*x**2 + 77.*q**4*w10fid*x**2 + b10fid*(7. - 14.*x**2)) + 7.*k**3*x*(1. + b10fid - 4.*b11fid*q**2 - 2.*chi1fid*q**2 - 4.*b02fid*q**4 - 2.*q**4*w10fid - 6.*q**4*w10fid*x**2 + 2.*b01fid*q**2*(1. + 2.*x**2)))**2*P(q)*P(np.sqrt(k**2 + q**2 - 2.*k*q*x)))/(2.718281828459045**(2.*q*Rfid**2*(q - 1.*k*x))*(k**2 + q**2 - 2.*k*q*x)**2)))/2.718281828459045**(0.3333333333333333*k**2*(3.*Rfid**2 + sigfid**2))
+from simplemodel import P_integrand, DP_integrand, B_integrand, DB_integrand
 
 # integrates and returns power spectrum for a given k general values of parameters (for use in "shift")
 def pk(k,(fnlfid ,b10fid, b20fid, b01fid, b11fid, b02fid, chi1fid, w10fid, sigfid, Rfid)):
@@ -310,18 +337,13 @@ def compute_pfid(): # computes power spectrum fiducial over pointlist and saves 
         print "pfid done"
         
         np.savez(modelhere+'/temp/pfid_'+shapehere+'.npz',pfid=np.asarray(pfid))
+    print pfid
 
 ###### derivatives of spectrum ######
-
-# FNLFID IS ALWAYS ZERO NOW
-
-def DP_integrand(k,q,x,par): # integrand of dp/dlambda (array for all parameters)
-    return np.asarray(((0.0036186137015120634*2.718281828459045**(-1.*q**2*Rfid**2 - 0.3333333333333333*k**2*(3.*Rfid**2 + sigfid**2) + k*q*Rfid**2*x)*(1. + b10fid + b01fid*k**2)*q*(7.*q**3*(b20fid + q**2*(2.*b11fid + 2.*chi1fid + q**2*(b02fid + 2.*w10fid))) + 7.*b01fid*k**5*x - 14.*k*q**2*(b20fid + q**2*(3.*b11fid + 3.*chi1fid + 2.*q**2*(b02fid + 2.*w10fid)))*x + 7.*k**4*q*(b11fid + b02fid*q**2 - 1.*q**2*w10fid - 4.*b01fid*x**2 + 3.*q**2*w10fid*x**2) + k**2*q*(3. + 7.*b20fid + 7.*b01fid*q**2 + 21.*b11fid*q**2 + 14.*chi1fid*q**2 + 14.*b02fid*q**4 + 7.*q**4*w10fid - 10.*x**2 - 28.*b01fid*q**2*x**2 + 28.*b11fid*q**2*x**2 + 28.*chi1fid*q**2*x**2 + 28.*b02fid*q**4*x**2 + 77.*q**4*w10fid*x**2 + b10fid*(7. - 14.*x**2)) + 7.*k**3*x*(1. + b10fid - 4.*b11fid*q**2 - 2.*chi1fid*q**2 - 4.*b02fid*q**4 - 2.*q**4*w10fid - 6.*q**4*w10fid*x**2 + 2.*b01fid*q**2*(1. + 2.*x**2)))*Fshape(q,np.sqrt(k**2 + q**2 - 2.*k*q*x),k))/(k**2 + q**2 - 2.*k*q*x),(0.03571428571428571*((28.*(1. + b10fid + b01fid*k**2)*P(k))/(qmax - 1.*qmin) + (0.10132118364233778*k**2*(q + k*x - 2.*q*x**2)*(7.*q**3*(b20fid + q**2*(2.*b11fid + 2.*chi1fid + q**2*(b02fid + 2.*w10fid))) + 7.*b01fid*k**5*x - 14.*k*q**2*(b20fid + q**2*(3.*b11fid + 3.*chi1fid + 2.*q**2*(b02fid + 2.*w10fid)))*x + 7.*k**4*q*(b11fid + b02fid*q**2 - 1.*q**2*w10fid - 4.*b01fid*x**2 + 3.*q**2*w10fid*x**2) + k**2*q*(3. + 7.*b20fid + 7.*b01fid*q**2 + 21.*b11fid*q**2 + 14.*chi1fid*q**2 + 14.*b02fid*q**4 + 7.*q**4*w10fid - 10.*x**2 - 28.*b01fid*q**2*x**2 + 28.*b11fid*q**2*x**2 + 28.*chi1fid*q**2*x**2 + 28.*b02fid*q**4*x**2 + 77.*q**4*w10fid*x**2 + b10fid*(7. - 14.*x**2)) + 7.*k**3*x*(1. + b10fid - 4.*b11fid*q**2 - 2.*chi1fid*q**2 - 4.*b02fid*q**4 - 2.*q**4*w10fid - 6.*q**4*w10fid*x**2 + 2.*b01fid*q**2*(1. + 2.*x**2)))*P(q)*P(np.sqrt(k**2 + q**2 - 2.*k*q*x)))/(2.718281828459045**(2.*q*Rfid**2*(q - 1.*k*x))*(k**2 + q**2 - 2.*k*q*x)**2)))/2.718281828459045**(0.3333333333333333*k**2*(3.*Rfid**2 + sigfid**2)),(0.0036186137015120634*2.718281828459045**(-2.*q**2*Rfid**2 - 0.3333333333333333*k**2*(3.*Rfid**2 + sigfid**2) + 2.*k*q*Rfid**2*x)*q*(7.*q**3*(b20fid + q**2*(2.*b11fid + 2.*chi1fid + q**2*(b02fid + 2.*w10fid))) + 7.*b01fid*k**5*x - 14.*k*q**2*(b20fid + q**2*(3.*b11fid + 3.*chi1fid + 2.*q**2*(b02fid + 2.*w10fid)))*x + 7.*k**4*q*(b11fid + b02fid*q**2 - 1.*q**2*w10fid - 4.*b01fid*x**2 + 3.*q**2*w10fid*x**2) + k**2*q*(3. + 7.*b20fid + 7.*b01fid*q**2 + 21.*b11fid*q**2 + 14.*chi1fid*q**2 + 14.*b02fid*q**4 + 7.*q**4*w10fid - 10.*x**2 - 28.*b01fid*q**2*x**2 + 28.*b11fid*q**2*x**2 + 28.*chi1fid*q**2*x**2 + 28.*b02fid*q**4*x**2 + 77.*q**4*w10fid*x**2 + b10fid*(7. - 14.*x**2)) + 7.*k**3*x*(1. + b10fid - 4.*b11fid*q**2 - 2.*chi1fid*q**2 - 4.*b02fid*q**4 - 2.*q**4*w10fid - 6.*q**4*w10fid*x**2 + 2.*b01fid*q**2*(1. + 2.*x**2)))*P(q)*P(np.sqrt(k**2 + q**2 - 2.*k*q*x)))/(k**2 + q**2 - 2.*k*q*x),(0.03571428571428571*k**2*((28.*(1. + b10fid + b01fid*k**2)*P(k))/(qmax - 1.*qmin) + (0.10132118364233778*(k**3*x - 4.*k**2*q*x**2 + q**3*(1. - 4.*x**2) + 2.*k*q**2*(x + 2.*x**3))*(7.*q**3*(b20fid + q**2*(2.*b11fid + 2.*chi1fid + q**2*(b02fid + 2.*w10fid))) + 7.*b01fid*k**5*x - 14.*k*q**2*(b20fid + q**2*(3.*b11fid + 3.*chi1fid + 2.*q**2*(b02fid + 2.*w10fid)))*x + 7.*k**4*q*(b11fid + b02fid*q**2 - 1.*q**2*w10fid - 4.*b01fid*x**2 + 3.*q**2*w10fid*x**2) + k**2*q*(3. + 7.*b20fid + 7.*b01fid*q**2 + 21.*b11fid*q**2 + 14.*chi1fid*q**2 + 14.*b02fid*q**4 + 7.*q**4*w10fid - 10.*x**2 - 28.*b01fid*q**2*x**2 + 28.*b11fid*q**2*x**2 + 28.*chi1fid*q**2*x**2 + 28.*b02fid*q**4*x**2 + 77.*q**4*w10fid*x**2 + b10fid*(7. - 14.*x**2)) + 7.*k**3*x*(1. + b10fid - 4.*b11fid*q**2 - 2.*chi1fid*q**2 - 4.*b02fid*q**4 - 2.*q**4*w10fid - 6.*q**4*w10fid*x**2 + 2.*b01fid*q**2*(1. + 2.*x**2)))*P(q)*P(np.sqrt(k**2 + q**2 - 2.*k*q*x)))/(2.718281828459045**(2.*q*Rfid**2*(q - 1.*k*x))*(k**2 + q**2 - 2.*k*q*x)**2)))/2.718281828459045**(0.3333333333333333*k**2*(3.*Rfid**2 + sigfid**2)),(0.0036186137015120634*2.718281828459045**(-2.*q**2*Rfid**2 - 0.3333333333333333*k**2*(3.*Rfid**2 + sigfid**2) + 2.*k*q*Rfid**2*x)*q*(k**2 + 2.*q**2 - 2.*k*q*x)*(7.*q**3*(b20fid + q**2*(2.*b11fid + 2.*chi1fid + q**2*(b02fid + 2.*w10fid))) + 7.*b01fid*k**5*x - 14.*k*q**2*(b20fid + q**2*(3.*b11fid + 3.*chi1fid + 2.*q**2*(b02fid + 2.*w10fid)))*x + 7.*k**4*q*(b11fid + b02fid*q**2 - 1.*q**2*w10fid - 4.*b01fid*x**2 + 3.*q**2*w10fid*x**2) + k**2*q*(3. + 7.*b20fid + 7.*b01fid*q**2 + 21.*b11fid*q**2 + 14.*chi1fid*q**2 + 14.*b02fid*q**4 + 7.*q**4*w10fid - 10.*x**2 - 28.*b01fid*q**2*x**2 + 28.*b11fid*q**2*x**2 + 28.*chi1fid*q**2*x**2 + 28.*b02fid*q**4*x**2 + 77.*q**4*w10fid*x**2 + b10fid*(7. - 14.*x**2)) + 7.*k**3*x*(1. + b10fid - 4.*b11fid*q**2 - 2.*chi1fid*q**2 - 4.*b02fid*q**4 - 2.*q**4*w10fid - 6.*q**4*w10fid*x**2 + 2.*b01fid*q**2*(1. + 2.*x**2)))*P(q)*P(np.sqrt(k**2 + q**2 - 2.*k*q*x)))/(k**2 + q**2 - 2.*k*q*x),0.0036186137015120634*2.718281828459045**(-2.*q**2*Rfid**2 - 0.3333333333333333*k**2*(3.*Rfid**2 + sigfid**2) + 2.*k*q*Rfid**2*x)*q**3*(7.*q**3*(b20fid + q**2*(2.*b11fid + 2.*chi1fid + q**2*(b02fid + 2.*w10fid))) + 7.*b01fid*k**5*x - 14.*k*q**2*(b20fid + q**2*(3.*b11fid + 3.*chi1fid + 2.*q**2*(b02fid + 2.*w10fid)))*x + 7.*k**4*q*(b11fid + b02fid*q**2 - 1.*q**2*w10fid - 4.*b01fid*x**2 + 3.*q**2*w10fid*x**2) + k**2*q*(3. + 7.*b20fid + 7.*b01fid*q**2 + 21.*b11fid*q**2 + 14.*chi1fid*q**2 + 14.*b02fid*q**4 + 7.*q**4*w10fid - 10.*x**2 - 28.*b01fid*q**2*x**2 + 28.*b11fid*q**2*x**2 + 28.*chi1fid*q**2*x**2 + 28.*b02fid*q**4*x**2 + 77.*q**4*w10fid*x**2 + b10fid*(7. - 14.*x**2)) + 7.*k**3*x*(1. + b10fid - 4.*b11fid*q**2 - 2.*chi1fid*q**2 - 4.*b02fid*q**4 - 2.*q**4*w10fid - 6.*q**4*w10fid*x**2 + 2.*b01fid*q**2*(1. + 2.*x**2)))*P(q)*P(np.sqrt(k**2 + q**2 - 2.*k*q*x)),(0.007237227403024127*2.718281828459045**(-2.*q**2*Rfid**2 - 0.3333333333333333*k**2*(3.*Rfid**2 + sigfid**2) + 2.*k*q*Rfid**2*x)*q**2*(q - 1.*k*x)*(7.*q**3*(b20fid + q**2*(2.*b11fid + 2.*chi1fid + q**2*(b02fid + 2.*w10fid))) + 7.*b01fid*k**5*x - 14.*k*q**2*(b20fid + q**2*(3.*b11fid + 3.*chi1fid + 2.*q**2*(b02fid + 2.*w10fid)))*x + 7.*k**4*q*(b11fid + b02fid*q**2 - 1.*q**2*w10fid - 4.*b01fid*x**2 + 3.*q**2*w10fid*x**2) + k**2*q*(3. + 7.*b20fid + 7.*b01fid*q**2 + 21.*b11fid*q**2 + 14.*chi1fid*q**2 + 14.*b02fid*q**4 + 7.*q**4*w10fid - 10.*x**2 - 28.*b01fid*q**2*x**2 + 28.*b11fid*q**2*x**2 + 28.*chi1fid*q**2*x**2 + 28.*b02fid*q**4*x**2 + 77.*q**4*w10fid*x**2 + b10fid*(7. - 14.*x**2)) + 7.*k**3*x*(1. + b10fid - 4.*b11fid*q**2 - 2.*chi1fid*q**2 - 4.*b02fid*q**4 - 2.*q**4*w10fid - 6.*q**4*w10fid*x**2 + 2.*b01fid*q**2*(1. + 2.*x**2)))*P(q)*P(np.sqrt(k**2 + q**2 - 2.*k*q*x)))/(k**2 + q**2 - 2.*k*q*x),(0.0036186137015120634*2.718281828459045**(-2.*q**2*Rfid**2 - 0.3333333333333333*k**2*(3.*Rfid**2 + sigfid**2) + 2.*k*q*Rfid**2*x)*q**3*(2.*q**2 - 4.*k*q*x + k**2*(-1. + 3.*x**2))*(7.*q**3*(b20fid + q**2*(2.*b11fid + 2.*chi1fid + q**2*(b02fid + 2.*w10fid))) + 7.*b01fid*k**5*x - 14.*k*q**2*(b20fid + q**2*(3.*b11fid + 3.*chi1fid + 2.*q**2*(b02fid + 2.*w10fid)))*x + 7.*k**4*q*(b11fid + b02fid*q**2 - 1.*q**2*w10fid - 4.*b01fid*x**2 + 3.*q**2*w10fid*x**2) + k**2*q*(3. + 7.*b20fid + 7.*b01fid*q**2 + 21.*b11fid*q**2 + 14.*chi1fid*q**2 + 14.*b02fid*q**4 + 7.*q**4*w10fid - 10.*x**2 - 28.*b01fid*q**2*x**2 + 28.*b11fid*q**2*x**2 + 28.*chi1fid*q**2*x**2 + 28.*b02fid*q**4*x**2 + 77.*q**4*w10fid*x**2 + b10fid*(7. - 14.*x**2)) + 7.*k**3*x*(1. + b10fid - 4.*b11fid*q**2 - 2.*chi1fid*q**2 - 4.*b02fid*q**4 - 2.*q**4*w10fid - 6.*q**4*w10fid*x**2 + 2.*b01fid*q**2*(1. + 2.*x**2)))*P(q)*P(np.sqrt(k**2 + q**2 - 2.*k*q*x)))/(k**2 + q**2 - 2.*k*q*x),(0.0017006802721088435*k**2*sigfid*((-196.*(1. + b10fid + b01fid*k**2)**2*P(k))/(qmax - 1.*qmin) - (0.10132118364233778*(7.*q**3*(b20fid + q**2*(2.*b11fid + 2.*chi1fid + q**2*(b02fid + 2.*w10fid))) + 7.*b01fid*k**5*x - 14.*k*q**2*(b20fid + q**2*(3.*b11fid + 3.*chi1fid + 2.*q**2*(b02fid + 2.*w10fid)))*x + 7.*k**4*q*(b11fid + b02fid*q**2 - 1.*q**2*w10fid - 4.*b01fid*x**2 + 3.*q**2*w10fid*x**2) + k**2*q*(3. + 7.*b20fid + 7.*b01fid*q**2 + 21.*b11fid*q**2 + 14.*chi1fid*q**2 + 14.*b02fid*q**4 + 7.*q**4*w10fid - 10.*x**2 - 28.*b01fid*q**2*x**2 + 28.*b11fid*q**2*x**2 + 28.*chi1fid*q**2*x**2 + 28.*b02fid*q**4*x**2 + 77.*q**4*w10fid*x**2 + b10fid*(7. - 14.*x**2)) + 7.*k**3*x*(1. + b10fid - 4.*b11fid*q**2 - 2.*chi1fid*q**2 - 4.*b02fid*q**4 - 2.*q**4*w10fid - 6.*q**4*w10fid*x**2 + 2.*b01fid*q**2*(1. + 2.*x**2)))**2*P(q)*P(np.sqrt(k**2 + q**2 - 2.*k*q*x)))/(2.718281828459045**(2.*q*Rfid**2*(q - 1.*k*x))*(k**2 + q**2 - 2.*k*q*x)**2)))/2.718281828459045**(0.3333333333333333*k**2*(3.*Rfid**2 + sigfid**2)),(0.00510204081632653*Rfid*((-196.*k**2*(1. + b10fid + b01fid*k**2)**2*P(k))/(qmax - 1.*qmin) - (0.10132118364233778*(k**2 + 2.*q**2 - 2.*k*q*x)*(7.*q**3*(b20fid + q**2*(2.*b11fid + 2.*chi1fid + q**2*(b02fid + 2.*w10fid))) + 7.*b01fid*k**5*x - 14.*k*q**2*(b20fid + q**2*(3.*b11fid + 3.*chi1fid + 2.*q**2*(b02fid + 2.*w10fid)))*x + 7.*k**4*q*(b11fid + b02fid*q**2 - 1.*q**2*w10fid - 4.*b01fid*x**2 + 3.*q**2*w10fid*x**2) + k**2*q*(3. + 7.*b20fid + 7.*b01fid*q**2 + 21.*b11fid*q**2 + 14.*chi1fid*q**2 + 14.*b02fid*q**4 + 7.*q**4*w10fid - 10.*x**2 - 28.*b01fid*q**2*x**2 + 28.*b11fid*q**2*x**2 + 28.*chi1fid*q**2*x**2 + 28.*b02fid*q**4*x**2 + 77.*q**4*w10fid*x**2 + b10fid*(7. - 14.*x**2)) + 7.*k**3*x*(1. + b10fid - 4.*b11fid*q**2 - 2.*chi1fid*q**2 - 4.*b02fid*q**4 - 2.*q**4*w10fid - 6.*q**4*w10fid*x**2 + 2.*b01fid*q**2*(1. + 2.*x**2)))**2*P(q)*P(np.sqrt(k**2 + q**2 - 2.*k*q*x)))/(2.718281828459045**(2.*q*Rfid**2*(q - 1.*k*x))*(k**2 + q**2 - 2.*k*q*x)**2)))/2.718281828459045**(0.3333333333333333*k**2*(3.*Rfid**2 + sigfid**2))))[allparam.index(par)]
-
 # integrates and returns partial derivative of power spectrum wrt a parameter for a given k and fid val of param
 def dpkpar(k,par):
     def f(y):
-        return  DP_integrand(k,y[0],y[1],par)
+        return  DP_integrand(k,y[0],y[1],[fnlfid ,b10fid, b20fid, b01fid, b11fid, b02fid, chi1fid, w10fid, sigfid, Rfid],par)
     integ = vegas.Integrator([[qmin, qmax], [-1, 1]])
     result = integ(f, nitn=ni, neval = 1.5*ne) # slightly more evaluations and iterations for the derivative to be sure to have about few percent accuracy
     print result.summary()
@@ -330,7 +352,7 @@ def dpkpar(k,par):
 def dpk(k): # return an array of the derivatives of P wrt to each param for given k
     print datetime.datetime.now()
     print " k = %f.3" % k
-    return [ dpkpar(k,x) for x in allparam ]
+    return [ dpkpar(k,x) for x in param ]
 
 def compute_dpfid(): #computes the derivatives of p wrt each param over the list of k pointlist
     global dpfid
@@ -400,11 +422,6 @@ def F_PP() : #computes the fisher with power spectrum data : about 35min (integr
 #  Fisher Bispectrum #
 ######################
 
-# FNLFID IS ALWAYS ZERO NOW
-
-def DB_integrand(k,q,x,par): # partial derivatives of B // here no need to separate the param as no integration
-    return np.asarray(((0.5*(1. + b10fid + b01fid*k[0]**2)*(1. + b10fid + b01fid*k[1]**2)*(1. + b10fid + b01fid*k[2]**2)*Fshape(k[0],k[1],k[2]))/(2.718281828459045**(0.16666666666666666*(k[0]**2 + k[1]**2 + k[2]**2)*(3.*Rfid**2 + sigfid**2))*(qmax - 1.*qmin)) - 0.00006461810181271541*q*((-1.*(1. + b10fid + b01fid*k[0]**2)*(((-2.*(k[1]**2 - 1.*k[2]**2)*((5. + 7.*b10fid)*k[1]**2 + 7.*b01fid*k[1]**4 + 2.*k[2]**2) - 7.*k[0]**6*(2.*b01fid - 3.*k[1]**2*w10fid) - 2.*k[0]**4*(5. + 7.*b10fid - 14.*b11fid*k[1]**2 - 14.*chi1fid*k[1]**2 - 14.*b02fid*k[1]**4 - 7.*b01fid*(k[1]**2 + k[2]**2) - 7.*k[1]**4*w10fid + 21.*k[1]**2*k[2]**2*w10fid) + k[0]**2*(2.*(3. + 7.*b10fid)*k[2]**2 + 21.*k[1]**6*w10fid + 14.*k[1]**4*(b01fid + 2.*b11fid + 2.*chi1fid - 3.*k[2]**2*w10fid) + k[1]**2*(20. + 28.*b10fid + 28.*b20fid - 28.*chi1fid*k[2]**2 + 21.*k[2]**4*w10fid)))*(7.*q**3*(b20fid + q**2*(2.*b11fid + 2.*chi1fid + q**2*(b02fid + 2.*w10fid))) + 7.*b01fid*k[1]**5*x - 14.*k[1]*q**2*(b20fid + q**2*(3.*b11fid + 3.*chi1fid + 2.*q**2*(b02fid + 2.*w10fid)))*x + 7.*k[1]**4*q*(b11fid + b02fid*q**2 - 1.*q**2*w10fid - 4.*b01fid*x**2 + 3.*q**2*w10fid*x**2) + k[1]**2*q*(3. + 7.*b20fid + 7.*b01fid*q**2 + 21.*b11fid*q**2 + 14.*chi1fid*q**2 + 14.*b02fid*q**4 + 7.*q**4*w10fid - 10.*x**2 - 28.*b01fid*q**2*x**2 + 28.*b11fid*q**2*x**2 + 28.*chi1fid*q**2*x**2 + 28.*b02fid*q**4*x**2 + 77.*q**4*w10fid*x**2 + b10fid*(7. - 14.*x**2)) + 7.*k[1]**3*x*(1. + b10fid - 4.*b11fid*q**2 - 2.*chi1fid*q**2 - 4.*b02fid*q**4 - 2.*q**4*w10fid - 6.*q**4*w10fid*x**2 + 2.*b01fid*q**2*(1. + 2.*x**2)))*Fshape(k[1],q,np.sqrt(k[1]**2 + q**2 - 2.*k[1]*q*x)))/(2.718281828459045**(0.5*Rfid**2*(k[0]**2 + 2.*(k[1]**2 + q**2 - 1.*k[1]*q*x)))*k[1]**2*(k[1]**2 + q**2 - 2.*k[1]*q*x)) + ((2.*(k[1]**2 - 1.*k[2]**2)*(2.*k[1]**2 + k[2]**2*(5. + 7.*b10fid + 7.*b01fid*k[2]**2)) - 7.*k[0]**6*(2.*b01fid - 3.*k[2]**2*w10fid) - 2.*k[0]**4*(5. + 7.*b10fid - 14.*b11fid*k[2]**2 - 14.*chi1fid*k[2]**2 - 14.*b02fid*k[2]**4 - 7.*b01fid*(k[1]**2 + k[2]**2) + 21.*k[1]**2*k[2]**2*w10fid - 7.*k[2]**4*w10fid) + k[0]**2*(21.*k[1]**4*k[2]**2*w10fid + 2.*k[1]**2*(3. + 7.*b10fid - 14.*chi1fid*k[2]**2 - 21.*k[2]**4*w10fid) + k[2]**2*(20. + 28.*b10fid + 28.*b20fid + 14.*b01fid*k[2]**2 + 28.*b11fid*k[2]**2 + 28.*chi1fid*k[2]**2 + 21.*k[2]**4*w10fid)))*(7.*q**3*(b20fid + q**2*(2.*b11fid + 2.*chi1fid + q**2*(b02fid + 2.*w10fid))) + 7.*b01fid*k[2]**5*x - 14.*k[2]*q**2*(b20fid + q**2*(3.*b11fid + 3.*chi1fid + 2.*q**2*(b02fid + 2.*w10fid)))*x + 7.*k[2]**4*q*(b11fid + b02fid*q**2 - 1.*q**2*w10fid - 4.*b01fid*x**2 + 3.*q**2*w10fid*x**2) + k[2]**2*q*(3. + 7.*b20fid + 7.*b01fid*q**2 + 21.*b11fid*q**2 + 14.*chi1fid*q**2 + 14.*b02fid*q**4 + 7.*q**4*w10fid - 10.*x**2 - 28.*b01fid*q**2*x**2 + 28.*b11fid*q**2*x**2 + 28.*chi1fid*q**2*x**2 + 28.*b02fid*q**4*x**2 + 77.*q**4*w10fid*x**2 + b10fid*(7. - 14.*x**2)) + 7.*k[2]**3*x*(1. + b10fid - 4.*b11fid*q**2 - 2.*chi1fid*q**2 - 4.*b02fid*q**4 - 2.*q**4*w10fid - 6.*q**4*w10fid*x**2 + 2.*b01fid*q**2*(1. + 2.*x**2)))*Fshape(k[2],q,np.sqrt(k[2]**2 + q**2 - 2.*k[2]*q*x)))/(2.718281828459045**(0.5*Rfid**2*(k[0]**2 + 2.*(k[2]**2 + q**2 - 1.*k[2]*q*x)))*k[2]**2*(k[2]**2 + q**2 - 2.*k[2]*q*x)))*P(k[0]))/(2.718281828459045**(0.5*k[0]**2*Rfid**2)*k[0]**2) - (1.*(1. + b10fid + b01fid*k[1]**2)*(((-2.*(k[1]**2 - 1.*k[2]**2)*((5. + 7.*b10fid)*k[1]**2 + 7.*b01fid*k[1]**4 + 2.*k[2]**2) - 7.*k[0]**6*(2.*b01fid - 3.*k[1]**2*w10fid) - 2.*k[0]**4*(5. + 7.*b10fid - 14.*b11fid*k[1]**2 - 14.*chi1fid*k[1]**2 - 14.*b02fid*k[1]**4 - 7.*b01fid*(k[1]**2 + k[2]**2) - 7.*k[1]**4*w10fid + 21.*k[1]**2*k[2]**2*w10fid) + k[0]**2*(2.*(3. + 7.*b10fid)*k[2]**2 + 21.*k[1]**6*w10fid + 14.*k[1]**4*(b01fid + 2.*b11fid + 2.*chi1fid - 3.*k[2]**2*w10fid) + k[1]**2*(20. + 28.*b10fid + 28.*b20fid - 28.*chi1fid*k[2]**2 + 21.*k[2]**4*w10fid)))*(7.*q**3*(b20fid + q**2*(2.*b11fid + 2.*chi1fid + q**2*(b02fid + 2.*w10fid))) + 7.*b01fid*k[0]**5*x - 14.*k[0]*q**2*(b20fid + q**2*(3.*b11fid + 3.*chi1fid + 2.*q**2*(b02fid + 2.*w10fid)))*x + 7.*k[0]**4*q*(b11fid + b02fid*q**2 - 1.*q**2*w10fid - 4.*b01fid*x**2 + 3.*q**2*w10fid*x**2) + k[0]**2*q*(3. + 7.*b20fid + 7.*b01fid*q**2 + 21.*b11fid*q**2 + 14.*chi1fid*q**2 + 14.*b02fid*q**4 + 7.*q**4*w10fid - 10.*x**2 - 28.*b01fid*q**2*x**2 + 28.*b11fid*q**2*x**2 + 28.*chi1fid*q**2*x**2 + 28.*b02fid*q**4*x**2 + 77.*q**4*w10fid*x**2 + b10fid*(7. - 14.*x**2)) + 7.*k[0]**3*x*(1. + b10fid - 4.*b11fid*q**2 - 2.*chi1fid*q**2 - 4.*b02fid*q**4 - 2.*q**4*w10fid - 6.*q**4*w10fid*x**2 + 2.*b01fid*q**2*(1. + 2.*x**2)))*Fshape(k[0],q,np.sqrt(k[0]**2 + q**2 - 2.*k[0]*q*x)))/(2.718281828459045**(0.5*Rfid**2*(2.*k[0]**2 + k[1]**2 + 2.*q**2 - 2.*k[0]*q*x))*k[0]**2*(k[0]**2 + q**2 - 2.*k[0]*q*x)) + ((-2.*k[2]**4*(5. + 7.*b10fid + 7.*b01fid*k[2]**2) - 7.*k[1]**6*(2.*b01fid - 3.*k[2]**2*w10fid) + k[0]**4*(4. + 21.*k[1]**2*k[2]**2*w10fid) + 2.*k[1]**4*(-5. - 7.*b10fid + 7.*b01fid*k[2]**2 + 14.*b11fid*k[2]**2 + 14.*chi1fid*k[2]**2 + 14.*b02fid*k[2]**4 + 7.*k[2]**4*w10fid) + k[1]**2*k[2]**2*(20. + 28.*b10fid + 28.*b20fid + 14.*b01fid*k[2]**2 + 28.*b11fid*k[2]**2 + 28.*chi1fid*k[2]**2 + 21.*k[2]**4*w10fid) + 2.*k[0]**2*(k[2]**2*(3. + 7.*b10fid + 7.*b01fid*k[2]**2) + 7.*k[1]**4*(b01fid - 3.*k[2]**2*w10fid) + k[1]**2*(3. + 7.*b10fid - 14.*chi1fid*k[2]**2 - 21.*k[2]**4*w10fid)))*(7.*q**3*(b20fid + q**2*(2.*b11fid + 2.*chi1fid + q**2*(b02fid + 2.*w10fid))) + 7.*b01fid*k[2]**5*x - 14.*k[2]*q**2*(b20fid + q**2*(3.*b11fid + 3.*chi1fid + 2.*q**2*(b02fid + 2.*w10fid)))*x + 7.*k[2]**4*q*(b11fid + b02fid*q**2 - 1.*q**2*w10fid - 4.*b01fid*x**2 + 3.*q**2*w10fid*x**2) + k[2]**2*q*(3. + 7.*b20fid + 7.*b01fid*q**2 + 21.*b11fid*q**2 + 14.*chi1fid*q**2 + 14.*b02fid*q**4 + 7.*q**4*w10fid - 10.*x**2 - 28.*b01fid*q**2*x**2 + 28.*b11fid*q**2*x**2 + 28.*chi1fid*q**2*x**2 + 28.*b02fid*q**4*x**2 + 77.*q**4*w10fid*x**2 + b10fid*(7. - 14.*x**2)) + 7.*k[2]**3*x*(1. + b10fid - 4.*b11fid*q**2 - 2.*chi1fid*q**2 - 4.*b02fid*q**4 - 2.*q**4*w10fid - 6.*q**4*w10fid*x**2 + 2.*b01fid*q**2*(1. + 2.*x**2)))*Fshape(k[2],q,np.sqrt(k[2]**2 + q**2 - 2.*k[2]*q*x)))/(2.718281828459045**(0.5*Rfid**2*(k[1]**2 + 2.*(k[2]**2 + q**2 - 1.*k[2]*q*x)))*k[2]**2*(k[2]**2 + q**2 - 2.*k[2]*q*x)))*P(k[1]))/(2.718281828459045**(0.5*k[1]**2*Rfid**2)*k[1]**2) - (1.*(1. + b10fid + b01fid*k[2]**2)*(((2.*(k[1]**2 - 1.*k[2]**2)*(2.*k[1]**2 + k[2]**2*(5. + 7.*b10fid + 7.*b01fid*k[2]**2)) - 7.*k[0]**6*(2.*b01fid - 3.*k[2]**2*w10fid) - 2.*k[0]**4*(5. + 7.*b10fid - 14.*b11fid*k[2]**2 - 14.*chi1fid*k[2]**2 - 14.*b02fid*k[2]**4 - 7.*b01fid*(k[1]**2 + k[2]**2) + 21.*k[1]**2*k[2]**2*w10fid - 7.*k[2]**4*w10fid) + k[0]**2*(21.*k[1]**4*k[2]**2*w10fid + 2.*k[1]**2*(3. + 7.*b10fid - 14.*chi1fid*k[2]**2 - 21.*k[2]**4*w10fid) + k[2]**2*(20. + 28.*b10fid + 28.*b20fid + 14.*b01fid*k[2]**2 + 28.*b11fid*k[2]**2 + 28.*chi1fid*k[2]**2 + 21.*k[2]**4*w10fid)))*(7.*q**3*(b20fid + q**2*(2.*b11fid + 2.*chi1fid + q**2*(b02fid + 2.*w10fid))) + 7.*b01fid*k[0]**5*x - 14.*k[0]*q**2*(b20fid + q**2*(3.*b11fid + 3.*chi1fid + 2.*q**2*(b02fid + 2.*w10fid)))*x + 7.*k[0]**4*q*(b11fid + b02fid*q**2 - 1.*q**2*w10fid - 4.*b01fid*x**2 + 3.*q**2*w10fid*x**2) + k[0]**2*q*(3. + 7.*b20fid + 7.*b01fid*q**2 + 21.*b11fid*q**2 + 14.*chi1fid*q**2 + 14.*b02fid*q**4 + 7.*q**4*w10fid - 10.*x**2 - 28.*b01fid*q**2*x**2 + 28.*b11fid*q**2*x**2 + 28.*chi1fid*q**2*x**2 + 28.*b02fid*q**4*x**2 + 77.*q**4*w10fid*x**2 + b10fid*(7. - 14.*x**2)) + 7.*k[0]**3*x*(1. + b10fid - 4.*b11fid*q**2 - 2.*chi1fid*q**2 - 4.*b02fid*q**4 - 2.*q**4*w10fid - 6.*q**4*w10fid*x**2 + 2.*b01fid*q**2*(1. + 2.*x**2)))*Fshape(k[0],q,np.sqrt(k[0]**2 + q**2 - 2.*k[0]*q*x)))/(2.718281828459045**(0.5*Rfid**2*(2.*k[0]**2 + k[2]**2 + 2.*q**2 - 2.*k[0]*q*x))*k[0]**2*(k[0]**2 + q**2 - 2.*k[0]*q*x)) + ((-2.*k[2]**4*(5. + 7.*b10fid + 7.*b01fid*k[2]**2) - 7.*k[1]**6*(2.*b01fid - 3.*k[2]**2*w10fid) + k[0]**4*(4. + 21.*k[1]**2*k[2]**2*w10fid) + 2.*k[1]**4*(-5. - 7.*b10fid + 7.*b01fid*k[2]**2 + 14.*b11fid*k[2]**2 + 14.*chi1fid*k[2]**2 + 14.*b02fid*k[2]**4 + 7.*k[2]**4*w10fid) + k[1]**2*k[2]**2*(20. + 28.*b10fid + 28.*b20fid + 14.*b01fid*k[2]**2 + 28.*b11fid*k[2]**2 + 28.*chi1fid*k[2]**2 + 21.*k[2]**4*w10fid) + 2.*k[0]**2*(k[2]**2*(3. + 7.*b10fid + 7.*b01fid*k[2]**2) + 7.*k[1]**4*(b01fid - 3.*k[2]**2*w10fid) + k[1]**2*(3. + 7.*b10fid - 14.*chi1fid*k[2]**2 - 21.*k[2]**4*w10fid)))*(7.*q**3*(b20fid + q**2*(2.*b11fid + 2.*chi1fid + q**2*(b02fid + 2.*w10fid))) + 7.*b01fid*k[1]**5*x - 14.*k[1]*q**2*(b20fid + q**2*(3.*b11fid + 3.*chi1fid + 2.*q**2*(b02fid + 2.*w10fid)))*x + 7.*k[1]**4*q*(b11fid + b02fid*q**2 - 1.*q**2*w10fid - 4.*b01fid*x**2 + 3.*q**2*w10fid*x**2) + k[1]**2*q*(3. + 7.*b20fid + 7.*b01fid*q**2 + 21.*b11fid*q**2 + 14.*chi1fid*q**2 + 14.*b02fid*q**4 + 7.*q**4*w10fid - 10.*x**2 - 28.*b01fid*q**2*x**2 + 28.*b11fid*q**2*x**2 + 28.*chi1fid*q**2*x**2 + 28.*b02fid*q**4*x**2 + 77.*q**4*w10fid*x**2 + b10fid*(7. - 14.*x**2)) + 7.*k[1]**3*x*(1. + b10fid - 4.*b11fid*q**2 - 2.*chi1fid*q**2 - 4.*b02fid*q**4 - 2.*q**4*w10fid - 6.*q**4*w10fid*x**2 + 2.*b01fid*q**2*(1. + 2.*x**2)))*Fshape(k[1],q,np.sqrt(k[1]**2 + q**2 - 2.*k[1]*q*x)))/(2.718281828459045**(0.5*Rfid**2*(2.*k[1]**2 + k[2]**2 + 2.*q**2 - 2.*k[1]*q*x))*k[1]**2*(k[1]**2 + q**2 - 2.*k[1]*q*x)))*P(k[2]))/(2.718281828459045**(0.5*k[2]**2*Rfid**2)*k[2]**2)),(0.017857142857142856*((-14.*(1. + b10fid + b01fid*k[0]**2)*(1. + b10fid + b01fid*k[1]**2)*(k[0]**4 + k[1]**4 - 1.*k[1]**2*k[2]**2 - 1.*k[0]**2*(2.*k[1]**2 + k[2]**2))*P(k[0])*P(k[1]))/(2.718281828459045**(1.*(k[0]**2 + k[1]**2)*Rfid**2)*k[0]**2*k[1]**2) + ((1. + b10fid + b01fid*k[0]**2)*(-2.*(k[1]**2 - 1.*k[2]**2)*((5. + 7.*b10fid)*k[1]**2 + 7.*b01fid*k[1]**4 + 2.*k[2]**2) - 7.*k[0]**6*(2.*b01fid - 3.*k[1]**2*w10fid) - 2.*k[0]**4*(5. + 7.*b10fid - 14.*b11fid*k[1]**2 - 14.*chi1fid*k[1]**2 - 14.*b02fid*k[1]**4 - 7.*b01fid*(k[1]**2 + k[2]**2) - 7.*k[1]**4*w10fid + 21.*k[1]**2*k[2]**2*w10fid) + k[0]**2*(2.*(3. + 7.*b10fid)*k[2]**2 + 21.*k[1]**6*w10fid + 14.*k[1]**4*(b01fid + 2.*b11fid + 2.*chi1fid - 3.*k[2]**2*w10fid) + k[1]**2*(20. + 28.*b10fid + 28.*b20fid - 28.*chi1fid*k[2]**2 + 21.*k[2]**4*w10fid)))*P(k[0])*P(k[1]))/(2.718281828459045**(1.*(k[0]**2 + k[1]**2)*Rfid**2)*k[0]**2*k[1]**2) + ((1. + b10fid + b01fid*k[1]**2)*(-2.*(k[1]**2 - 1.*k[2]**2)*((5. + 7.*b10fid)*k[1]**2 + 7.*b01fid*k[1]**4 + 2.*k[2]**2) - 7.*k[0]**6*(2.*b01fid - 3.*k[1]**2*w10fid) - 2.*k[0]**4*(5. + 7.*b10fid - 14.*b11fid*k[1]**2 - 14.*chi1fid*k[1]**2 - 14.*b02fid*k[1]**4 - 7.*b01fid*(k[1]**2 + k[2]**2) - 7.*k[1]**4*w10fid + 21.*k[1]**2*k[2]**2*w10fid) + k[0]**2*(2.*(3. + 7.*b10fid)*k[2]**2 + 21.*k[1]**6*w10fid + 14.*k[1]**4*(b01fid + 2.*b11fid + 2.*chi1fid - 3.*k[2]**2*w10fid) + k[1]**2*(20. + 28.*b10fid + 28.*b20fid - 28.*chi1fid*k[2]**2 + 21.*k[2]**4*w10fid)))*P(k[0])*P(k[1]))/(2.718281828459045**(1.*(k[0]**2 + k[1]**2)*Rfid**2)*k[0]**2*k[1]**2) - (14.*(1. + b10fid + b01fid*k[0]**2)*(1. + b10fid + b01fid*k[2]**2)*(k[0]**4 - 1.*k[1]**2*k[2]**2 + k[2]**4 - 1.*k[0]**2*(k[1]**2 + 2.*k[2]**2))*P(k[0])*P(k[2]))/(2.718281828459045**(1.*(k[0]**2 + k[2]**2)*Rfid**2)*k[0]**2*k[2]**2) + ((1. + b10fid + b01fid*k[0]**2)*(2.*(k[1]**2 - 1.*k[2]**2)*(2.*k[1]**2 + k[2]**2*(5. + 7.*b10fid + 7.*b01fid*k[2]**2)) - 7.*k[0]**6*(2.*b01fid - 3.*k[2]**2*w10fid) - 2.*k[0]**4*(5. + 7.*b10fid - 14.*b11fid*k[2]**2 - 14.*chi1fid*k[2]**2 - 14.*b02fid*k[2]**4 - 7.*b01fid*(k[1]**2 + k[2]**2) + 21.*k[1]**2*k[2]**2*w10fid - 7.*k[2]**4*w10fid) + k[0]**2*(21.*k[1]**4*k[2]**2*w10fid + 2.*k[1]**2*(3. + 7.*b10fid - 14.*chi1fid*k[2]**2 - 21.*k[2]**4*w10fid) + k[2]**2*(20. + 28.*b10fid + 28.*b20fid + 14.*b01fid*k[2]**2 + 28.*b11fid*k[2]**2 + 28.*chi1fid*k[2]**2 + 21.*k[2]**4*w10fid)))*P(k[0])*P(k[2]))/(2.718281828459045**(1.*(k[0]**2 + k[2]**2)*Rfid**2)*k[0]**2*k[2]**2) + ((1. + b10fid + b01fid*k[2]**2)*(2.*(k[1]**2 - 1.*k[2]**2)*(2.*k[1]**2 + k[2]**2*(5. + 7.*b10fid + 7.*b01fid*k[2]**2)) - 7.*k[0]**6*(2.*b01fid - 3.*k[2]**2*w10fid) - 2.*k[0]**4*(5. + 7.*b10fid - 14.*b11fid*k[2]**2 - 14.*chi1fid*k[2]**2 - 14.*b02fid*k[2]**4 - 7.*b01fid*(k[1]**2 + k[2]**2) + 21.*k[1]**2*k[2]**2*w10fid - 7.*k[2]**4*w10fid) + k[0]**2*(21.*k[1]**4*k[2]**2*w10fid + 2.*k[1]**2*(3. + 7.*b10fid - 14.*chi1fid*k[2]**2 - 21.*k[2]**4*w10fid) + k[2]**2*(20. + 28.*b10fid + 28.*b20fid + 14.*b01fid*k[2]**2 + 28.*b11fid*k[2]**2 + 28.*chi1fid*k[2]**2 + 21.*k[2]**4*w10fid)))*P(k[0])*P(k[2]))/(2.718281828459045**(1.*(k[0]**2 + k[2]**2)*Rfid**2)*k[0]**2*k[2]**2) - (14.*(1. + b10fid + b01fid*k[1]**2)*(1. + b10fid + b01fid*k[2]**2)*((k[1]**2 - 1.*k[2]**2)**2 - 1.*k[0]**2*(k[1]**2 + k[2]**2))*P(k[1])*P(k[2]))/(2.718281828459045**(1.*(k[1]**2 + k[2]**2)*Rfid**2)*k[1]**2*k[2]**2) + ((1. + b10fid + b01fid*k[1]**2)*(-2.*k[2]**4*(5. + 7.*b10fid + 7.*b01fid*k[2]**2) - 7.*k[1]**6*(2.*b01fid - 3.*k[2]**2*w10fid) + k[0]**4*(4. + 21.*k[1]**2*k[2]**2*w10fid) + 2.*k[1]**4*(-5. - 7.*b10fid + 7.*b01fid*k[2]**2 + 14.*b11fid*k[2]**2 + 14.*chi1fid*k[2]**2 + 14.*b02fid*k[2]**4 + 7.*k[2]**4*w10fid) + k[1]**2*k[2]**2*(20. + 28.*b10fid + 28.*b20fid + 14.*b01fid*k[2]**2 + 28.*b11fid*k[2]**2 + 28.*chi1fid*k[2]**2 + 21.*k[2]**4*w10fid) + 2.*k[0]**2*(k[2]**2*(3. + 7.*b10fid + 7.*b01fid*k[2]**2) + 7.*k[1]**4*(b01fid - 3.*k[2]**2*w10fid) + k[1]**2*(3. + 7.*b10fid - 14.*chi1fid*k[2]**2 - 21.*k[2]**4*w10fid)))*P(k[1])*P(k[2]))/(2.718281828459045**(1.*(k[1]**2 + k[2]**2)*Rfid**2)*k[1]**2*k[2]**2) + ((1. + b10fid + b01fid*k[2]**2)*(-2.*k[2]**4*(5. + 7.*b10fid + 7.*b01fid*k[2]**2) - 7.*k[1]**6*(2.*b01fid - 3.*k[2]**2*w10fid) + k[0]**4*(4. + 21.*k[1]**2*k[2]**2*w10fid) + 2.*k[1]**4*(-5. - 7.*b10fid + 7.*b01fid*k[2]**2 + 14.*b11fid*k[2]**2 + 14.*chi1fid*k[2]**2 + 14.*b02fid*k[2]**4 + 7.*k[2]**4*w10fid) + k[1]**2*k[2]**2*(20. + 28.*b10fid + 28.*b20fid + 14.*b01fid*k[2]**2 + 28.*b11fid*k[2]**2 + 28.*chi1fid*k[2]**2 + 21.*k[2]**4*w10fid) + 2.*k[0]**2*(k[2]**2*(3. + 7.*b10fid + 7.*b01fid*k[2]**2) + 7.*k[1]**4*(b01fid - 3.*k[2]**2*w10fid) + k[1]**2*(3. + 7.*b10fid - 14.*chi1fid*k[2]**2 - 21.*k[2]**4*w10fid)))*P(k[1])*P(k[2]))/(2.718281828459045**(1.*(k[1]**2 + k[2]**2)*Rfid**2)*k[1]**2*k[2]**2)))/(2.718281828459045**(0.16666666666666666*(k[0]**2 + k[1]**2 + k[2]**2)*sigfid**2)*(qmax - 1.*qmin)),(0.5*(((1. + b10fid + b01fid*k[0]**2)*(1. + b10fid + b01fid*k[1]**2)*P(k[0])*P(k[1]))/2.718281828459045**(1.*(k[0]**2 + k[1]**2)*Rfid**2) + ((1. + b10fid + b01fid*k[0]**2)*(1. + b10fid + b01fid*k[2]**2)*P(k[0])*P(k[2]))/2.718281828459045**(1.*(k[0]**2 + k[2]**2)*Rfid**2) + ((1. + b10fid + b01fid*k[1]**2)*(1. + b10fid + b01fid*k[2]**2)*P(k[1])*P(k[2]))/2.718281828459045**(1.*(k[1]**2 + k[2]**2)*Rfid**2)))/(2.718281828459045**(0.16666666666666666*(k[0]**2 + k[1]**2 + k[2]**2)*sigfid**2)*(qmax - 1.*qmin)),(0.017857142857142856*((-14.*(1. + b10fid + b01fid*k[0]**2)*(1. + b10fid + b01fid*k[1]**2)*(k[0]**6 - 1.*k[0]**2*k[1]**4 + k[1]**6 - 1.*k[1]**4*k[2]**2 - 1.*k[0]**4*(k[1]**2 + k[2]**2))*P(k[0])*P(k[1]))/(2.718281828459045**(1.*(k[0]**2 + k[1]**2)*Rfid**2)*k[0]**2*k[1]**2) + ((1. + b10fid + b01fid*k[0]**2)*(-2.*(k[1]**2 - 1.*k[2]**2)*((5. + 7.*b10fid)*k[1]**2 + 7.*b01fid*k[1]**4 + 2.*k[2]**2) - 7.*k[0]**6*(2.*b01fid - 3.*k[1]**2*w10fid) - 2.*k[0]**4*(5. + 7.*b10fid - 14.*b11fid*k[1]**2 - 14.*chi1fid*k[1]**2 - 14.*b02fid*k[1]**4 - 7.*b01fid*(k[1]**2 + k[2]**2) - 7.*k[1]**4*w10fid + 21.*k[1]**2*k[2]**2*w10fid) + k[0]**2*(2.*(3. + 7.*b10fid)*k[2]**2 + 21.*k[1]**6*w10fid + 14.*k[1]**4*(b01fid + 2.*b11fid + 2.*chi1fid - 3.*k[2]**2*w10fid) + k[1]**2*(20. + 28.*b10fid + 28.*b20fid - 28.*chi1fid*k[2]**2 + 21.*k[2]**4*w10fid)))*P(k[0])*P(k[1]))/(2.718281828459045**(1.*(k[0]**2 + k[1]**2)*Rfid**2)*k[0]**2) + ((1. + b10fid + b01fid*k[1]**2)*(-2.*(k[1]**2 - 1.*k[2]**2)*((5. + 7.*b10fid)*k[1]**2 + 7.*b01fid*k[1]**4 + 2.*k[2]**2) - 7.*k[0]**6*(2.*b01fid - 3.*k[1]**2*w10fid) - 2.*k[0]**4*(5. + 7.*b10fid - 14.*b11fid*k[1]**2 - 14.*chi1fid*k[1]**2 - 14.*b02fid*k[1]**4 - 7.*b01fid*(k[1]**2 + k[2]**2) - 7.*k[1]**4*w10fid + 21.*k[1]**2*k[2]**2*w10fid) + k[0]**2*(2.*(3. + 7.*b10fid)*k[2]**2 + 21.*k[1]**6*w10fid + 14.*k[1]**4*(b01fid + 2.*b11fid + 2.*chi1fid - 3.*k[2]**2*w10fid) + k[1]**2*(20. + 28.*b10fid + 28.*b20fid - 28.*chi1fid*k[2]**2 + 21.*k[2]**4*w10fid)))*P(k[0])*P(k[1]))/(2.718281828459045**(1.*(k[0]**2 + k[1]**2)*Rfid**2)*k[1]**2) - (14.*(1. + b10fid + b01fid*k[0]**2)*(1. + b10fid + b01fid*k[2]**2)*(k[0]**6 - 1.*k[0]**2*k[2]**4 - 1.*k[1]**2*k[2]**4 + k[2]**6 - 1.*k[0]**4*(k[1]**2 + k[2]**2))*P(k[0])*P(k[2]))/(2.718281828459045**(1.*(k[0]**2 + k[2]**2)*Rfid**2)*k[0]**2*k[2]**2) + ((1. + b10fid + b01fid*k[0]**2)*(2.*(k[1]**2 - 1.*k[2]**2)*(2.*k[1]**2 + k[2]**2*(5. + 7.*b10fid + 7.*b01fid*k[2]**2)) - 7.*k[0]**6*(2.*b01fid - 3.*k[2]**2*w10fid) - 2.*k[0]**4*(5. + 7.*b10fid - 14.*b11fid*k[2]**2 - 14.*chi1fid*k[2]**2 - 14.*b02fid*k[2]**4 - 7.*b01fid*(k[1]**2 + k[2]**2) + 21.*k[1]**2*k[2]**2*w10fid - 7.*k[2]**4*w10fid) + k[0]**2*(21.*k[1]**4*k[2]**2*w10fid + 2.*k[1]**2*(3. + 7.*b10fid - 14.*chi1fid*k[2]**2 - 21.*k[2]**4*w10fid) + k[2]**2*(20. + 28.*b10fid + 28.*b20fid + 14.*b01fid*k[2]**2 + 28.*b11fid*k[2]**2 + 28.*chi1fid*k[2]**2 + 21.*k[2]**4*w10fid)))*P(k[0])*P(k[2]))/(2.718281828459045**(1.*(k[0]**2 + k[2]**2)*Rfid**2)*k[0]**2) + ((1. + b10fid + b01fid*k[2]**2)*(2.*(k[1]**2 - 1.*k[2]**2)*(2.*k[1]**2 + k[2]**2*(5. + 7.*b10fid + 7.*b01fid*k[2]**2)) - 7.*k[0]**6*(2.*b01fid - 3.*k[2]**2*w10fid) - 2.*k[0]**4*(5. + 7.*b10fid - 14.*b11fid*k[2]**2 - 14.*chi1fid*k[2]**2 - 14.*b02fid*k[2]**4 - 7.*b01fid*(k[1]**2 + k[2]**2) + 21.*k[1]**2*k[2]**2*w10fid - 7.*k[2]**4*w10fid) + k[0]**2*(21.*k[1]**4*k[2]**2*w10fid + 2.*k[1]**2*(3. + 7.*b10fid - 14.*chi1fid*k[2]**2 - 21.*k[2]**4*w10fid) + k[2]**2*(20. + 28.*b10fid + 28.*b20fid + 14.*b01fid*k[2]**2 + 28.*b11fid*k[2]**2 + 28.*chi1fid*k[2]**2 + 21.*k[2]**4*w10fid)))*P(k[0])*P(k[2]))/(2.718281828459045**(1.*(k[0]**2 + k[2]**2)*Rfid**2)*k[2]**2) - (14.*(1. + b10fid + b01fid*k[1]**2)*(1. + b10fid + b01fid*k[2]**2)*((k[1]**2 - 1.*k[2]**2)**2*(k[1]**2 + k[2]**2) - 1.*k[0]**2*(k[1]**4 + k[2]**4))*P(k[1])*P(k[2]))/(2.718281828459045**(1.*(k[1]**2 + k[2]**2)*Rfid**2)*k[1]**2*k[2]**2) + ((1. + b10fid + b01fid*k[1]**2)*(-2.*k[2]**4*(5. + 7.*b10fid + 7.*b01fid*k[2]**2) - 7.*k[1]**6*(2.*b01fid - 3.*k[2]**2*w10fid) + k[0]**4*(4. + 21.*k[1]**2*k[2]**2*w10fid) + 2.*k[1]**4*(-5. - 7.*b10fid + 7.*b01fid*k[2]**2 + 14.*b11fid*k[2]**2 + 14.*chi1fid*k[2]**2 + 14.*b02fid*k[2]**4 + 7.*k[2]**4*w10fid) + k[1]**2*k[2]**2*(20. + 28.*b10fid + 28.*b20fid + 14.*b01fid*k[2]**2 + 28.*b11fid*k[2]**2 + 28.*chi1fid*k[2]**2 + 21.*k[2]**4*w10fid) + 2.*k[0]**2*(k[2]**2*(3. + 7.*b10fid + 7.*b01fid*k[2]**2) + 7.*k[1]**4*(b01fid - 3.*k[2]**2*w10fid) + k[1]**2*(3. + 7.*b10fid - 14.*chi1fid*k[2]**2 - 21.*k[2]**4*w10fid)))*P(k[1])*P(k[2]))/(2.718281828459045**(1.*(k[1]**2 + k[2]**2)*Rfid**2)*k[1]**2) + ((1. + b10fid + b01fid*k[2]**2)*(-2.*k[2]**4*(5. + 7.*b10fid + 7.*b01fid*k[2]**2) - 7.*k[1]**6*(2.*b01fid - 3.*k[2]**2*w10fid) + k[0]**4*(4. + 21.*k[1]**2*k[2]**2*w10fid) + 2.*k[1]**4*(-5. - 7.*b10fid + 7.*b01fid*k[2]**2 + 14.*b11fid*k[2]**2 + 14.*chi1fid*k[2]**2 + 14.*b02fid*k[2]**4 + 7.*k[2]**4*w10fid) + k[1]**2*k[2]**2*(20. + 28.*b10fid + 28.*b20fid + 14.*b01fid*k[2]**2 + 28.*b11fid*k[2]**2 + 28.*chi1fid*k[2]**2 + 21.*k[2]**4*w10fid) + 2.*k[0]**2*(k[2]**2*(3. + 7.*b10fid + 7.*b01fid*k[2]**2) + 7.*k[1]**4*(b01fid - 3.*k[2]**2*w10fid) + k[1]**2*(3. + 7.*b10fid - 14.*chi1fid*k[2]**2 - 21.*k[2]**4*w10fid)))*P(k[1])*P(k[2]))/(2.718281828459045**(1.*(k[1]**2 + k[2]**2)*Rfid**2)*k[2]**2)))/(2.718281828459045**(0.16666666666666666*(k[0]**2 + k[1]**2 + k[2]**2)*sigfid**2)*(qmax - 1.*qmin)),(0.5*(((1. + b10fid + b01fid*k[0]**2)*(k[0]**2 + k[1]**2)*(1. + b10fid + b01fid*k[1]**2)*P(k[0])*P(k[1]))/2.718281828459045**(1.*(k[0]**2 + k[1]**2)*Rfid**2) + ((1. + b10fid + b01fid*k[0]**2)*(k[0]**2 + k[2]**2)*(1. + b10fid + b01fid*k[2]**2)*P(k[0])*P(k[2]))/2.718281828459045**(1.*(k[0]**2 + k[2]**2)*Rfid**2) + ((1. + b10fid + b01fid*k[1]**2)*(k[1]**2 + k[2]**2)*(1. + b10fid + b01fid*k[2]**2)*P(k[1])*P(k[2]))/2.718281828459045**(1.*(k[1]**2 + k[2]**2)*Rfid**2)))/(2.718281828459045**(0.16666666666666666*(k[0]**2 + k[1]**2 + k[2]**2)*sigfid**2)*(qmax - 1.*qmin)),(0.5*((k[0]**2*(1. + b10fid + b01fid*k[0]**2)*k[1]**2*(1. + b10fid + b01fid*k[1]**2)*P(k[0])*P(k[1]))/2.718281828459045**(1.*(k[0]**2 + k[1]**2)*Rfid**2) + (k[0]**2*(1. + b10fid + b01fid*k[0]**2)*k[2]**2*(1. + b10fid + b01fid*k[2]**2)*P(k[0])*P(k[2]))/2.718281828459045**(1.*(k[0]**2 + k[2]**2)*Rfid**2) + (k[1]**2*(1. + b10fid + b01fid*k[1]**2)*k[2]**2*(1. + b10fid + b01fid*k[2]**2)*P(k[1])*P(k[2]))/2.718281828459045**(1.*(k[1]**2 + k[2]**2)*Rfid**2)))/(2.718281828459045**(0.16666666666666666*(k[0]**2 + k[1]**2 + k[2]**2)*sigfid**2)*(qmax - 1.*qmin)),(0.5*(((1. + b10fid + b01fid*k[0]**2)*(1. + b10fid + b01fid*k[1]**2)*(k[0]**2 + k[1]**2 - 1.*k[2]**2)*P(k[0])*P(k[1]))/2.718281828459045**(1.*(k[0]**2 + k[1]**2)*Rfid**2) + ((1. + b10fid + b01fid*k[0]**2)*(k[0]**2 - 1.*k[1]**2 + k[2]**2)*(1. + b10fid + b01fid*k[2]**2)*P(k[0])*P(k[2]))/2.718281828459045**(1.*(k[0]**2 + k[2]**2)*Rfid**2) + ((1. + b10fid + b01fid*k[1]**2)*(-1.*k[0]**2 + k[1]**2 + k[2]**2)*(1. + b10fid + b01fid*k[2]**2)*P(k[1])*P(k[2]))/2.718281828459045**(1.*(k[1]**2 + k[2]**2)*Rfid**2)))/(2.718281828459045**(0.16666666666666666*(k[0]**2 + k[1]**2 + k[2]**2)*sigfid**2)*(qmax - 1.*qmin)),(0.125*(((1. + b10fid + b01fid*k[0]**2)*(1. + b10fid + b01fid*k[1]**2)*(3.*k[0]**4 + 2.*k[0]**2*(k[1]**2 - 3.*k[2]**2) + 3.*(k[1]**2 - 1.*k[2]**2)**2)*P(k[0])*P(k[1]))/2.718281828459045**(1.*(k[0]**2 + k[1]**2)*Rfid**2) + ((1. + b10fid + b01fid*k[0]**2)*(1. + b10fid + b01fid*k[2]**2)*(3.*k[0]**4 + 3.*(k[1]**2 - 1.*k[2]**2)**2 + k[0]**2*(-6.*k[1]**2 + 2.*k[2]**2))*P(k[0])*P(k[2]))/2.718281828459045**(1.*(k[0]**2 + k[2]**2)*Rfid**2) + ((1. + b10fid + b01fid*k[1]**2)*(1. + b10fid + b01fid*k[2]**2)*(3.*k[0]**4 + 3.*k[1]**4 + 2.*k[1]**2*k[2]**2 + 3.*k[2]**4 - 6.*k[0]**2*(k[1]**2 + k[2]**2))*P(k[1])*P(k[2]))/2.718281828459045**(1.*(k[1]**2 + k[2]**2)*Rfid**2)))/(2.718281828459045**(0.16666666666666666*(k[0]**2 + k[1]**2 + k[2]**2)*sigfid**2)*(qmax - 1.*qmin)),(-0.005952380952380952*(k[0]**2 + k[1]**2 + k[2]**2)*sigfid*(((1. + b10fid + b01fid*k[0]**2)*(1. + b10fid + b01fid*k[1]**2)*(-2.*(k[1]**2 - 1.*k[2]**2)*((5. + 7.*b10fid)*k[1]**2 + 7.*b01fid*k[1]**4 + 2.*k[2]**2) - 7.*k[0]**6*(2.*b01fid - 3.*k[1]**2*w10fid) - 2.*k[0]**4*(5. + 7.*b10fid - 14.*b11fid*k[1]**2 - 14.*chi1fid*k[1]**2 - 14.*b02fid*k[1]**4 - 7.*b01fid*(k[1]**2 + k[2]**2) - 7.*k[1]**4*w10fid + 21.*k[1]**2*k[2]**2*w10fid) + k[0]**2*(2.*(3. + 7.*b10fid)*k[2]**2 + 21.*k[1]**6*w10fid + 14.*k[1]**4*(b01fid + 2.*b11fid + 2.*chi1fid - 3.*k[2]**2*w10fid) + k[1]**2*(20. + 28.*b10fid + 28.*b20fid - 28.*chi1fid*k[2]**2 + 21.*k[2]**4*w10fid)))*P(k[0])*P(k[1]))/(2.718281828459045**(1.*(k[0]**2 + k[1]**2)*Rfid**2)*k[0]**2*k[1]**2) + ((1. + b10fid + b01fid*k[0]**2)*(1. + b10fid + b01fid*k[2]**2)*(2.*(k[1]**2 - 1.*k[2]**2)*(2.*k[1]**2 + k[2]**2*(5. + 7.*b10fid + 7.*b01fid*k[2]**2)) - 7.*k[0]**6*(2.*b01fid - 3.*k[2]**2*w10fid) - 2.*k[0]**4*(5. + 7.*b10fid - 14.*b11fid*k[2]**2 - 14.*chi1fid*k[2]**2 - 14.*b02fid*k[2]**4 - 7.*b01fid*(k[1]**2 + k[2]**2) + 21.*k[1]**2*k[2]**2*w10fid - 7.*k[2]**4*w10fid) + k[0]**2*(21.*k[1]**4*k[2]**2*w10fid + 2.*k[1]**2*(3. + 7.*b10fid - 14.*chi1fid*k[2]**2 - 21.*k[2]**4*w10fid) + k[2]**2*(20. + 28.*b10fid + 28.*b20fid + 14.*b01fid*k[2]**2 + 28.*b11fid*k[2]**2 + 28.*chi1fid*k[2]**2 + 21.*k[2]**4*w10fid)))*P(k[0])*P(k[2]))/(2.718281828459045**(1.*(k[0]**2 + k[2]**2)*Rfid**2)*k[0]**2*k[2]**2) + ((1. + b10fid + b01fid*k[1]**2)*(1. + b10fid + b01fid*k[2]**2)*(-2.*k[2]**4*(5. + 7.*b10fid + 7.*b01fid*k[2]**2) - 7.*k[1]**6*(2.*b01fid - 3.*k[2]**2*w10fid) + k[0]**4*(4. + 21.*k[1]**2*k[2]**2*w10fid) + 2.*k[1]**4*(-5. - 7.*b10fid + 7.*b01fid*k[2]**2 + 14.*b11fid*k[2]**2 + 14.*chi1fid*k[2]**2 + 14.*b02fid*k[2]**4 + 7.*k[2]**4*w10fid) + k[1]**2*k[2]**2*(20. + 28.*b10fid + 28.*b20fid + 14.*b01fid*k[2]**2 + 28.*b11fid*k[2]**2 + 28.*chi1fid*k[2]**2 + 21.*k[2]**4*w10fid) + 2.*k[0]**2*(k[2]**2*(3. + 7.*b10fid + 7.*b01fid*k[2]**2) + 7.*k[1]**4*(b01fid - 3.*k[2]**2*w10fid) + k[1]**2*(3. + 7.*b10fid - 14.*chi1fid*k[2]**2 - 21.*k[2]**4*w10fid)))*P(k[1])*P(k[2]))/(2.718281828459045**(1.*(k[1]**2 + k[2]**2)*Rfid**2)*k[1]**2*k[2]**2)))/(2.718281828459045**(0.16666666666666666*(k[0]**2 + k[1]**2 + k[2]**2)*sigfid**2)*(qmax - 1.*qmin)),(0.017857142857142856*((-2.*(1. + b10fid + b01fid*k[0]**2)*(k[0]**2 + k[1]**2)*(1. + b10fid + b01fid*k[1]**2)*Rfid*(-2.*(k[1]**2 - 1.*k[2]**2)*((5. + 7.*b10fid)*k[1]**2 + 7.*b01fid*k[1]**4 + 2.*k[2]**2) - 7.*k[0]**6*(2.*b01fid - 3.*k[1]**2*w10fid) - 2.*k[0]**4*(5. + 7.*b10fid - 14.*b11fid*k[1]**2 - 14.*chi1fid*k[1]**2 - 14.*b02fid*k[1]**4 - 7.*b01fid*(k[1]**2 + k[2]**2) - 7.*k[1]**4*w10fid + 21.*k[1]**2*k[2]**2*w10fid) + k[0]**2*(2.*(3. + 7.*b10fid)*k[2]**2 + 21.*k[1]**6*w10fid + 14.*k[1]**4*(b01fid + 2.*b11fid + 2.*chi1fid - 3.*k[2]**2*w10fid) + k[1]**2*(20. + 28.*b10fid + 28.*b20fid - 28.*chi1fid*k[2]**2 + 21.*k[2]**4*w10fid)))*P(k[0])*P(k[1]))/(2.718281828459045**(1.*(k[0]**2 + k[1]**2)*Rfid**2)*k[0]**2*k[1]**2) - (2.*(1. + b10fid + b01fid*k[0]**2)*(k[0]**2 + k[2]**2)*(1. + b10fid + b01fid*k[2]**2)*Rfid*(2.*(k[1]**2 - 1.*k[2]**2)*(2.*k[1]**2 + k[2]**2*(5. + 7.*b10fid + 7.*b01fid*k[2]**2)) - 7.*k[0]**6*(2.*b01fid - 3.*k[2]**2*w10fid) - 2.*k[0]**4*(5. + 7.*b10fid - 14.*b11fid*k[2]**2 - 14.*chi1fid*k[2]**2 - 14.*b02fid*k[2]**4 - 7.*b01fid*(k[1]**2 + k[2]**2) + 21.*k[1]**2*k[2]**2*w10fid - 7.*k[2]**4*w10fid) + k[0]**2*(21.*k[1]**4*k[2]**2*w10fid + 2.*k[1]**2*(3. + 7.*b10fid - 14.*chi1fid*k[2]**2 - 21.*k[2]**4*w10fid) + k[2]**2*(20. + 28.*b10fid + 28.*b20fid + 14.*b01fid*k[2]**2 + 28.*b11fid*k[2]**2 + 28.*chi1fid*k[2]**2 + 21.*k[2]**4*w10fid)))*P(k[0])*P(k[2]))/(2.718281828459045**(1.*(k[0]**2 + k[2]**2)*Rfid**2)*k[0]**2*k[2]**2) - (2.*(1. + b10fid + b01fid*k[1]**2)*(k[1]**2 + k[2]**2)*(1. + b10fid + b01fid*k[2]**2)*Rfid*(-2.*k[2]**4*(5. + 7.*b10fid + 7.*b01fid*k[2]**2) - 7.*k[1]**6*(2.*b01fid - 3.*k[2]**2*w10fid) + k[0]**4*(4. + 21.*k[1]**2*k[2]**2*w10fid) + 2.*k[1]**4*(-5. - 7.*b10fid + 7.*b01fid*k[2]**2 + 14.*b11fid*k[2]**2 + 14.*chi1fid*k[2]**2 + 14.*b02fid*k[2]**4 + 7.*k[2]**4*w10fid) + k[1]**2*k[2]**2*(20. + 28.*b10fid + 28.*b20fid + 14.*b01fid*k[2]**2 + 28.*b11fid*k[2]**2 + 28.*chi1fid*k[2]**2 + 21.*k[2]**4*w10fid) + 2.*k[0]**2*(k[2]**2*(3. + 7.*b10fid + 7.*b01fid*k[2]**2) + 7.*k[1]**4*(b01fid - 3.*k[2]**2*w10fid) + k[1]**2*(3. + 7.*b10fid - 14.*chi1fid*k[2]**2 - 21.*k[2]**4*w10fid)))*P(k[1])*P(k[2]))/(2.718281828459045**(1.*(k[1]**2 + k[2]**2)*Rfid**2)*k[1]**2*k[2]**2)))/(2.718281828459045**(0.16666666666666666*(k[0]**2 + k[1]**2 + k[2]**2)*sigfid**2)*(qmax - 1.*qmin))))[allparam.index(par)]
-
 # integrates and returns partial derivative of power spectrum wrt a parameter for a given k and fid val of param
 def dbkpar(k,par):
     print datetime.datetime.now()
@@ -414,17 +431,17 @@ def dbkpar(k,par):
     print "progress %i / %f.0" % (stri,(len(param)/ncores)*len(trianglelist)) # put len of dbfid instead ! ###################
     
     def f(y):
-        return  DB_integrand(k,y[0],y[1],par)
+        return  DB_integrand(k,y[0],y[1],[fnlfid ,b10fid, b20fid, b01fid, b11fid, b02fid, chi1fid, w10fid, sigfid, Rfid],par)
     integ = vegas.Integrator([[qmin, qmax], [-1, 1]])
     result = integ(f, nitn=ni, neval = 1.5*ne) # 1 more than the rest
     print result.summary()
-    return result.mean
+    return result.mean()
 
 
 
 def dbk(k): # return an array of the derivatives of P wrt to each param for given k
 
-    return [ dbkpar(k,x) for x in allparam ]
+    return [ dbkpar(k,x) for x in param ]
 
 
 def compute_dbfid(): #computes the derivatives of p wrt each param over the list of k
@@ -499,33 +516,6 @@ def compute_dbfid(): #computes the derivatives of p wrt each param over the list
     print datetime.datetime.now()
     print "dbfid done"
 
-
-
-
-#def compute_dbfid(): #computes the derivatives of p wrt each param over the list of k
-#    global dbfid
-#    
-#    if os.path.isfile(modelhere+'/temp/dbfid_'+shapehere+'.npz') and recdbfid == "no":
-#        data = np.load(modelhere+'/temp/dbfid_'+shapehere+'.npz')
-#        dbfid = data['dbfid'].tolist()
-#        data.close()
-#        print "dbfid loaded"
-#        #print dbfid
-#    else :
-#        print datetime.datetime.now()
-#        print "computing dbfid (dB/dlambda)"
-#        global ntri
-#        ntri = 0;
-#        
-#        poolB = multiprocessing.Pool(processes=ncores); # start a multiprocess
-#        dbfid = poolB.map(dbk, trianglelist)
-#        poolB.close()
-#        
-#        #print dbfid
-#        print datetime.datetime.now()
-#        print "dbfid done"
-#        np.savez(modelhere+'/temp/dbfid_'+shapehere+'.npz',dbfid=np.asarray(dbfid))
-
 def F_BB() : #computes the fisher with bispectrum data
     
     if os.path.isfile(modelhere+'/temp/fb_'+shapehere+'.npz') and recfb == "no":
@@ -557,6 +547,7 @@ def F_BB() : #computes the fisher with bispectrum data
     return Ftemp
 
 def compute_fisher(): # computes the fisher for shaperhere shape and datahere data
+    #    load_model(modelname) # loads all definitions needed for the fisher // this furiously looks like a class instention
     if datahere == "P":
         Ftemp = F_PP()
     elif datahere == "B" :
@@ -573,18 +564,10 @@ def compute_fisher(): # computes the fisher for shaperhere shape and datahere da
 #  Systematic shifts  #
 #######################
 
-# FNL IS ZERO ALWAYS
-
-def B_integrand(k,q,x,(fnlfid ,b10fid, b20fid, b01fid, b11fid, b02fid, chi1fid, w10fid, sigfid, Rfid)): # bispectrum integrand for a given triangle
-    return (0.008414,(0.017857142857142856*(((1. + b10fid + b01fid*k[0]**2)*(1. + b10fid + b01fid*k[1]**2)*(-2.*(k[1]**2 - 1.*k[2]**2)*((5. + 7.*b10fid)*k[1]**2 + 7.*b01fid*k[1]**4 + 2.*k[2]**2) - 14.*k[0]**6*(1.*b01fid - 1.5*k[1]**2*w10fid) - 2.*k[0]**4*(5. + 7.*b10fid - 14.*b11fid*k[1]**2 - 14.*chi1fid*k[1]**2 - 14.*b02fid*k[1]**4 - 7.*b01fid*(k[1]**2 + k[2]**2) - 7.*k[1]**4*w10fid + 21.*k[1]**2*k[2]**2*w10fid) + k[0]**2*((6. + 14.*b10fid)*k[2]**2 + 21.*k[1]**6*w10fid + k[1]**4*(14.*b01fid + 28.*b11fid + 28.*chi1fid - 42.*k[2]**2*w10fid) + k[1]**2*(20. + 28.*b10fid + 28.*b20fid - 28.*chi1fid*k[2]**2 + 21.*k[2]**4*w10fid)))*P(k[0])*P(k[1]))/(2.718281828459045**(1.*(k[0]**2 + k[1]**2)*Rfid**2)*k[0]**2*k[1]**2) + ((1. + b10fid + b01fid*k[0]**2)*(1. + b10fid + b01fid*k[2]**2)*(2.*(k[1]**2 - 1.*k[2]**2)*(2.*k[1]**2 + k[2]**2*(5. + 7.*b10fid + 7.*b01fid*k[2]**2)) - 14.*k[0]**6*(1.*b01fid - 1.5*k[2]**2*w10fid) - 2.*k[0]**4*(5. + 7.*b10fid - 14.*b11fid*k[2]**2 - 14.*chi1fid*k[2]**2 - 14.*b02fid*k[2]**4 - 7.*b01fid*(k[1]**2 + k[2]**2) + 21.*k[1]**2*k[2]**2*w10fid - 7.*k[2]**4*w10fid) + k[0]**2*(21.*k[1]**4*k[2]**2*w10fid + k[1]**2*(6. + 14.*b10fid - 28.*chi1fid*k[2]**2 - 42.*k[2]**4*w10fid) + k[2]**2*(20. + 28.*b10fid + 28.*b20fid + 14.*b01fid*k[2]**2 + 28.*b11fid*k[2]**2 + 28.*chi1fid*k[2]**2 + 21.*k[2]**4*w10fid)))*P(k[0])*P(k[2]))/(2.718281828459045**(1.*(k[0]**2 + k[2]**2)*Rfid**2)*k[0]**2*k[2]**2) - (14.*(1. + b10fid + b01fid*k[1]**2)*(1. + b10fid + b01fid*k[2]**2)*(k[2]**4*(0.7142857142857143 + 1.*b10fid + 1.*b01fid*k[2]**2) + k[1]**6*(1.*b01fid - 1.5*k[2]**2*w10fid) + k[0]**4*(-0.2857142857142857 - 1.5*k[1]**2*k[2]**2*w10fid) + k[1]**2*k[2]**2*(-1.4285714285714286 - 2.*b10fid - 2.*b20fid - 1.*b01fid*k[2]**2 - 2.*b11fid*k[2]**2 - 2.*chi1fid*k[2]**2 - 1.5*k[2]**4*w10fid) + k[1]**4*(0.7142857142857143 + 1.*b10fid - 1.*b01fid*k[2]**2 - 2.*b11fid*k[2]**2 - 2.*chi1fid*k[2]**2 - 2.*b02fid*k[2]**4 - 1.*k[2]**4*w10fid) + k[0]**2*(k[2]**2*(-0.42857142857142855 - 1.*b10fid - 1.*b01fid*k[2]**2) + k[1]**4*(-1.*b01fid + 3.*k[2]**2*w10fid) + k[1]**2*(-0.42857142857142855 - 1.*b10fid + 2.*chi1fid*k[2]**2 + 3.*k[2]**4*w10fid)))*P(k[1])*P(k[2]))/(2.718281828459045**(1.*(k[1]**2 + k[2]**2)*Rfid**2)*k[1]**2*k[2]**2)))/(2.718281828459045**(0.16666666666666666*(k[0]**2 + k[1]**2 + k[2]**2)*sigfid**2)*(qmax - 1.*qmin)))
-
-
-
 def bkfid(k): # b(k) at fid values
     print datetime.datetime.now()
-    
     def f(y):
-        return B_integrand(k,y[0],y[1],[fnlfid ,b10fid, b20fid, b01fid, b11fid, b02fid, chi1fid, w10fid, sigfid, Rfid])
+        return B_integrand(k,y[0],y[1],(fnlfid ,b10fid, b20fid, b01fid, b11fid, b02fid, chi1fid, w10fid, sigfid, Rfid))
     integ = vegas.Integrator([[qmin, qmax], [-1.,1.]])
     result = integ(f, nitn=ni, neval=ne)
     
@@ -596,7 +579,6 @@ def bkfid(k): # b(k) at fid values
     return result.mean
 
 def bkshift(k): # b(k) at shifted values
-    
     def f(y):
         return B_integrand(k,y[0],y[1],[fnlshift ,b10shift, b20shift, b01shift, b11shift, b02shift, chi1shift, w10shift, sigshift, Rshift])
     integ = vegas.Integrator([[qmin, qmax], [-1.,1.]])
