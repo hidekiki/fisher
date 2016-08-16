@@ -41,8 +41,6 @@ kf = ((2.*np.pi)/(V**(1./3.))); # for a 10Gpc^3 survey, took kf = 2PI/cubic root
 klow =  kf; #
 khigh = 0.2; # default
 
-
-
 ################
 #  initialize  #
 ################
@@ -302,7 +300,7 @@ def Fshape(k1,k2,k3):
 #    else :
 #        print "wrong model name"
 
-from simplemodel import P_integrand, DP_integrand, B_integrand, DB_integrand
+from fullmodel import P_integrand, DP_integrand, B_integrand, DB_integrand
 
 # integrates and returns power spectrum for a given k general values of parameters (for use in "shift")
 def pk(k,(fnlfid ,b10fid, b20fid, b01fid, b11fid, b02fid, chi1fid, w10fid, sigfid, Rfid)):
@@ -435,7 +433,7 @@ def dbkpar(k,par):
     integ = vegas.Integrator([[qmin, qmax], [-1, 1]])
     result = integ(f, nitn=ni, neval = 1.5*ne) # 1 more than the rest
     print result.summary()
-    return result.mean()
+    return result.mean
 
 
 
