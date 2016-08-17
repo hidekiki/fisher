@@ -24,7 +24,7 @@ E = np.exp(1.)
 # for integration loops and parallel
 qmin = 0.0001
 qmax = 10. #default
-ncores = multiprocessing.cpu_count()
+ncores = multiprocessing.cpu_count()-1.
 n=1.; # default consider every n*kf for the bispectrum . for the power specutrm it computes every kf. 
 ni = 2; #number iterations
 ne = 2000; #number of evaluations
