@@ -155,7 +155,7 @@ def initialize(act,allfid,allpri,nn,kkhigh):
     qmax = 5./Rfid
     khigh = kkhigh
     n = nn
-#compute_list()
+    compute_list()
 
 def model_output() :
     print("#############################")
