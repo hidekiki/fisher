@@ -60,13 +60,13 @@ allpriors = [0.,0.,0.,0.,0.,0.,0.,0.,0.,0.] # priors
 
 
 # for simple model
-models=[[["local",],["P","B","P+B"],[ 1.,1.,1.,0.,0.,0.,0.,0.,1.,1.],1.,0.16]
+#models=[[["local",],["P","B","P+B"],[ 1.,1.,1.,0.,0.,0.,0.,0.,1.,1.],1.,0.16]
         #,[["equilateral",],["P","B","P+B"],[ 1.,1., 1.,0.,0.,0.,0.,0., 1., 1.],1.,0.16]
         ] #shape, data, parameters , n, kmax
 
 # for full model
 # all the models and combinations of data that we want to compute. for shape and data it's possible to specify more than 1 element : all combinations will be computed
-models=[[["local",],["P","B","P+B"],[ 1.,1.,1.,1.,1.,1.,1.,1.,1.,1.],1.,0.16]
+models=[[["local","equilateral","orthogonal"],["P","B","P+B"],[ 1.,1.,1.,1.,1.,1.,1.,1.,1.,1.],1.,0.16]
         #,[["equilateral",],["P","B","P+B"],[ 1.,1., 1.,0.,0.,0.,0.,0., 1., 1.],1.,0.16]
         ] #shape, data, parameters , n, kmax
 
