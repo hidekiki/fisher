@@ -17,8 +17,6 @@ from tempfile import TemporaryFile
 import os.path
 from numpy import linalg, pi, sin
 
-from extras import Survey
-
 E = np.exp(1.)
 
 # for integration loops and parallel
@@ -30,8 +28,17 @@ ni = 2; #number iterations
 ne = 2000; #number of evaluations
 
 #######################
-#  survey parameters  # OBSOLETE : now use Survey
+#  survey parameters  #
 #######################
+#old survey
+#V = 10**10 # volume of the survey in (Mpc/h)^3 1.60354*10**10
+#ng = 0.005 # galaxy density for shot noise in  (h/Mpc)^3 0.000399415
+#
+## triangles configurations over which we will sum over // sum over all ordered combinations
+#kf = ((2.*np.pi)/(V**(1./3.))); # for a 10Gpc^3 survey, took kf = 2PI/cubic root (V) in 1/(Mpc/h)
+#klow =  kf; #0.001
+#khigh = 0.17; # as in sefussati and komatsu 0.2
+
 #new survey
 V = 1.60354*10**10 # volume of the survey in (Mpc/h)^3
 ng = 0.000399415  # galaxy density for shot noise in  (h/Mpc)^3
@@ -40,6 +47,7 @@ ng = 0.000399415  # galaxy density for shot noise in  (h/Mpc)^3
 kf = ((2.*np.pi)/(V**(1./3.))); # for a 10Gpc^3 survey, took kf = 2PI/cubic root (V) in 1/(Mpc/h)
 klow =  kf; #
 khigh = 0.2; # default
+
 
 ################
 #  initialize  #
@@ -113,8 +121,6 @@ schi1 = 0.;
 #counts progress in dbfid
 stri = 0;
 chunksize = 100 # divide the triangle list in chunks of size "chunksize". carefull not to change the chunksize between runs!
-
-
 
 #sets dedicated names for the fidvalues
 def initialize(act,allfid,allpri,nn,kkhigh):
@@ -213,7 +219,6 @@ def T(k) :   # rename for convienience. T relates the initial curvature power sp
 #plt.title('Checking interpolation')
 #plt.show()
 
-
 #######################
 # triangle in the sum #
 #######################
@@ -228,13 +233,12 @@ def compute_list():
     
     if pointlistP == [] :
         pointlistP = np.arange(klow,khigh,kf).tolist() # will be used in the sum for the PP fisher
-    
-    # generating the list of triangles from k min to kmax with spacing kf
+
+# generating the list of triangles from k min to kmax with spacing kf
     if trianglelist ==  [] :
         pointlistB = np.arange(klow,khigh,n*kf).tolist() # will be used in the sum for the PP fisher
         listraw = cartesian((pointlistB, pointlistB, pointlistB))
         trianglelist = [s for s in listraw if ((2*max(s[0],s[1],s[2]) <= s[0]+s[1]+s[2]) and (s[0]<=s[1]<=s[2])   )] # keep only triangle inequality and with sides ordered by increasing length
-
 
 ###################
 # variance and pt #
@@ -300,7 +304,9 @@ def Fshape(k1,k2,k3):
 #    else :
 #        print "wrong model name"
 
-from fullmodel import P_integrand, DP_integrand, B_integrand, DB_integrand
+from simplemodel import P_integrand, DP_integrand, B_integrand, DB_integrand
+#from fullmodel import P_integrand, DP_integrand, B_integrand, DB_integrand
+
 
 # integrates and returns power spectrum for a given k general values of parameters (for use in "shift")
 def pk(k,(fnlfid ,b10fid, b20fid, b01fid, b11fid, b02fid, chi1fid, w10fid, sigfid, Rfid)):
@@ -335,7 +341,7 @@ def compute_pfid(): # computes power spectrum fiducial over pointlist and saves 
         print "pfid done"
         
         np.savez(modelhere+'/temp/pfid_'+shapehere+'.npz',pfid=np.asarray(pfid))
-    print pfid
+    #print pfid
 
 ###### derivatives of spectrum ######
 # integrates and returns partial derivative of power spectrum wrt a parameter for a given k and fid val of param
@@ -383,10 +389,10 @@ def Fel_PP(k): #element of the sum of the fisher matrix for given k, reads from 
     #print datetime.datetime.now()
     #print "computing k = %f.3" % k
     
-    Ftemp = np.zeros([len(allparam), len(allparam)],dtype=float)
+    Ftemp = np.zeros([len(param), len(param)],dtype=float)
     
-    for i in range(len(allparam)):                 #builds the fisher matrix from derivatives and the variance
-        for j in range(len(allparam)):
+    for i in range(len(param)):                 #builds the fisher matrix from derivatives and the variance
+        for j in range(len(param)):
             Ftemp[i,j] = dpfid[pointlistP.index(k)][i]*dpfid[pointlistP.index(k)][j]/var_p(k)
 
     return Ftemp
@@ -404,7 +410,12 @@ def F_PP() : #computes the fisher with power spectrum data : about 35min (integr
         print "computing fp"
         compute_pfid() # computes the ps
         compute_dpfid() # computes the derivatives of ps
-        Ftemp = np.zeros([len(allparam), len(allparam)],dtype=float)
+        print len(pointlistP)
+        print len(param)
+        print len(pfid)
+        print len(dpfid[1])
+
+        Ftemp = np.zeros([len(param), len(param)],dtype=float)
         
         poolP = multiprocessing.Pool(processes=ncores); # start a multiprocess
         Ftemp = np.sum(poolP.map(Fel_PP, pointlistP ),axis=0); # parallel evaluate to speed up PP does not dep on shape so we take it out of the loop. for the defs to be shared, the B-pool needs to be after chosenshape has been set (in the loop)
@@ -426,7 +437,7 @@ def dbkpar(k,par):
     
     global stri
     stri += 1;
-    print "progress %i / %f.0" % (stri,(len(param)/ncores)*len(trianglelist)) # put len of dbfid instead ! ###################
+    print "progress %.2f percent" % (100.*(stri/((float(len(param))/ncores)*len(trianglelist)))) # put len of dbfid instead ! ###################
     
     def f(y):
         return  DB_integrand(k,y[0],y[1],[fnlfid ,b10fid, b20fid, b01fid, b11fid, b02fid, chi1fid, w10fid, sigfid, Rfid],par)
@@ -447,9 +458,11 @@ def compute_dbfid(): #computes the derivatives of p wrt each param over the list
 
     if os.path.isfile(modelhere+'/temp/dbfid_'+shapehere+'.npz') and recdbfid == "no":
         data = np.load(modelhere+'/temp/dbfid_'+shapehere+'.npz')
-        dbfid = data['dbfid'].tolist()
+        #print 'ok'
+        dbfid = data['dbfid'].tolist()[0]
         data.close()
         print datetime.datetime.now()
+        print dbfid
         
         if len(dbfid) == len(trianglelist):
             print "dbfid loaded"
@@ -460,9 +473,12 @@ def compute_dbfid(): #computes the derivatives of p wrt each param over the list
         elif len(dbfid) > 0:
             print "continuing dbfid computation"
             tmin = len(dbfid)
+            print "length of dbfid"
+            #print dbfid
+            print len(dbfid)
             global stri
-            print(stri)
-            stri = (len(param)/ncores)*len(dbfid);
+            #print(stri)
+            stri = (float(len(param))/ncores)*len(dbfid);
             print(stri)
         else:
             print "empty file, computing dbfid (dB/dlambda)"
@@ -531,11 +547,11 @@ def F_BB() : #computes the fisher with bispectrum data
         compute_pfid() # computes the powerspectrum if not yet done
         compute_dbfid() # same for the derivatives of b
         
-        Ftemp = np.zeros([len(allparam), len(allparam)],dtype=float)
+        Ftemp = np.zeros([len(param), len(param)],dtype=float)
         
         for t in range(len(trianglelist)): # build fisher matrix from derivatives easier sequentially here
-            for j in range(len(allparam)):
-                for i in range(len(allparam)):
+            for j in range(len(param)):
+                for i in range(len(param)):
                     Ftemp[i,j] += (dbfid[t][i] * dbfid[t][j]) / Var2Factor(trianglelist[t][0],trianglelist[t][1],trianglelist[t][2])
         
         print datetime.datetime.now()
