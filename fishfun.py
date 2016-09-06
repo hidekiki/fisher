@@ -455,35 +455,32 @@ def dbk(k): # return an array of the derivatives of P wrt to each param for give
 
 def compute_dbfid(): #computes the derivatives of p wrt each param over the list of k
     global dbfid
-
+    
     if os.path.isfile(modelhere+'/temp/dbfid_'+shapehere+'.npz') and recdbfid == "no":
         data = np.load(modelhere+'/temp/dbfid_'+shapehere+'.npz')
-        #print 'ok'
-        dbfid = data['dbfid'].tolist()[0]
+        dbfid = data['dbfid'].tolist()
         data.close()
         print datetime.datetime.now()
-        print dbfid
         
         if len(dbfid) == len(trianglelist):
             print "dbfid loaded"
-    
-#        print " len dbfid "
-#        print len(dbfid)
-
+        
+        #        print " len dbfid "
+        #        print len(dbfid)
+        
         elif len(dbfid) > 0:
             print "continuing dbfid computation"
-            tmin = len(dbfid)
-            print "length of dbfid"
-            #print dbfid
-            print len(dbfid)
+            tmin = len(dbfid) #index of first triangle to be computed
+            print dbfid
+            print "tmin = %f" % tmin
             global stri
-            #print(stri)
+            print "stri before = %i " % stri
             stri = (float(len(param))/ncores)*len(dbfid);
-            print(stri)
+            print "stri = %i " % stri
         else:
             print "empty file, computing dbfid (dB/dlambda)"
             dbfid = [] # accumulates the result
-            tmin = 0
+            tmin = 0 #index of the first triangle that needs to be included
     else:
         print "no previous file, computing dbfid (dB/dlambda)"
         dbfid = [] # accumulates the result
@@ -494,39 +491,44 @@ def compute_dbfid(): #computes the derivatives of p wrt each param over the list
 #    print "length of dbfid = %i " % len(dbfid)
 #    print "len dbfid / chunksize = %f" % (len(dbfid)/chunksize)
 
-    for i in range((len(dbfid)/chunksize),1+int((len(trianglelist)/chunksize)//1)):
-            
-#        print "length of dbfid = %i " % len(dbfid)
-#        print "length of dbfid/chunksize = %i " % (len(dbfid)/chunksize)
-
-        print "chunk %i out of %i " % (1+i,1+int((len(trianglelist)/chunksize)//1))
-            
-        if (i+1)*chunksize > len(trianglelist):
-            tmax = len(trianglelist)
-        else :
-            tmax = (i+1)*chunksize
+    for i in range(int((len(dbfid)/chunksize)//1),1+int((len(trianglelist)/chunksize)//1)): #does not include the upper bound
+    
+    #        print "length of dbfid = %i " % len(dbfid)
+    #        print "length of dbfid/chunksize = %i " % (len(dbfid)/chunksize)
+    
+        print "chunk %i out of %i " % (i+1,1+int((len(trianglelist)/chunksize)//1))
         
-        listhere = trianglelist[tmin:tmax] # returns the (tmin+1) element of the list up to tmax'th element
-
+        if (i+1)*chunksize > len(trianglelist): #check length of list
+            tmax = len(trianglelist)-1 #index of last triangle that has to be included
+        else :
+            tmax = (i+1)*chunksize-1 #index of last triangle in the list
+        
+        print "tmin = %i" % tmin
+        print "tmax = %i" % tmax
+        
+        listhere = trianglelist[tmin:tmax+1] # returns the (tmin+1)th element of the list up to tmax'th element, tmax excluded
+        
+        print "list here length %i" % len(listhere)
+        
         dbfidhere = poolB.map(dbk,listhere)
         
-#        print "dbfid here"
-#        print dbfidhere
-
-        dbfid.append(dbfidhere)
-
-#        print "dbfid after appending"
-#        print dbfid
-
+        #        print "dbfid here"
+        #        print dbfidhere
+        
+        dbfid += dbfidhere
+        
+        #        print "dbfid after appending"
+        #        print dbfid
+        
         np.savez(modelhere+'/temp/dbfid_'+shapehere+'.npz',dbfid=np.asarray(dbfid))
         
-        tmin = i*chunksize # set the minimum for the next chunk
-
+        tmin = (i+1)*chunksize # set the minimum for the next chunk
+        
         print "chunk %i done" % (i+1)
-        
+
     poolB.close()
-        
-        #print dbfid
+    
+    #print dbfid
     print datetime.datetime.now()
     print "dbfid done"
 
