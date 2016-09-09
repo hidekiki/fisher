@@ -485,52 +485,53 @@ def compute_dbfid(): #computes the derivatives of p wrt each param over the list
         print "no previous file, computing dbfid (dB/dlambda)"
         dbfid = [] # accumulates the result
         tmin = 0
+        
+    if len(dbfid) != len(trianglelist):
+        poolB = multiprocessing.Pool(processes=ncores); # start a multiprocess
 
-    poolB = multiprocessing.Pool(processes=ncores); # start a multiprocess
+    #    print "length of dbfid = %i " % len(dbfid)
+    #    print "len dbfid / chunksize = %f" % (len(dbfid)/chunksize)
 
-#    print "length of dbfid = %i " % len(dbfid)
-#    print "len dbfid / chunksize = %f" % (len(dbfid)/chunksize)
+        for i in range(int((len(dbfid)/chunksize)//1),1+int((len(trianglelist)/chunksize)//1)): #does not include the upper bound
+        
+        #        print "length of dbfid = %i " % len(dbfid)
+        #        print "length of dbfid/chunksize = %i " % (len(dbfid)/chunksize)
+        
+            print "chunk %i out of %i " % (i+1,1+int((len(trianglelist)/chunksize)//1))
+            
+            if (i+1)*chunksize > len(trianglelist): #check length of list
+                tmax = len(trianglelist)-1 #index of last triangle that has to be included
+            else :
+                tmax = (i+1)*chunksize-1 #index of last triangle in the list
+            
+            print "tmin = %i" % tmin
+            print "tmax = %i" % tmax
+            
+            listhere = trianglelist[tmin:tmax+1] # returns the (tmin+1)th element of the list up to tmax'th element, tmax excluded
+            
+            print "list here length %i" % len(listhere)
+            
+            dbfidhere = poolB.map(dbk,listhere)
+            
+            #        print "dbfid here"
+            #        print dbfidhere
+            
+            dbfid += dbfidhere
+            
+            #        print "dbfid after appending"
+            #        print dbfid
+            
+            np.savez(modelhere+'/temp/dbfid_'+shapehere+'.npz',dbfid=np.asarray(dbfid))
+            
+            tmin = (i+1)*chunksize # set the minimum for the next chunk
+            
+            print "chunk %i done" % (i+1)
 
-    for i in range(int((len(dbfid)/chunksize)//1),1+int((len(trianglelist)/chunksize)//1)): #does not include the upper bound
-    
-    #        print "length of dbfid = %i " % len(dbfid)
-    #        print "length of dbfid/chunksize = %i " % (len(dbfid)/chunksize)
-    
-        print "chunk %i out of %i " % (i+1,1+int((len(trianglelist)/chunksize)//1))
+        poolB.close()
         
-        if (i+1)*chunksize > len(trianglelist): #check length of list
-            tmax = len(trianglelist)-1 #index of last triangle that has to be included
-        else :
-            tmax = (i+1)*chunksize-1 #index of last triangle in the list
-        
-        print "tmin = %i" % tmin
-        print "tmax = %i" % tmax
-        
-        listhere = trianglelist[tmin:tmax+1] # returns the (tmin+1)th element of the list up to tmax'th element, tmax excluded
-        
-        print "list here length %i" % len(listhere)
-        
-        dbfidhere = poolB.map(dbk,listhere)
-        
-        #        print "dbfid here"
-        #        print dbfidhere
-        
-        dbfid += dbfidhere
-        
-        #        print "dbfid after appending"
-        #        print dbfid
-        
-        np.savez(modelhere+'/temp/dbfid_'+shapehere+'.npz',dbfid=np.asarray(dbfid))
-        
-        tmin = (i+1)*chunksize # set the minimum for the next chunk
-        
-        print "chunk %i done" % (i+1)
-
-    poolB.close()
-    
-    #print dbfid
-    print datetime.datetime.now()
-    print "dbfid done"
+        #print dbfid
+        print datetime.datetime.now()
+        print "dbfid done"
 
 def F_BB() : #computes the fisher with bispectrum data
     
