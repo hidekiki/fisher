@@ -240,6 +240,7 @@ def compute_list():
         listraw = cartesian((pointlistB, pointlistB, pointlistB))
         trianglelist = [s for s in listraw if ((2*max(s[0],s[1],s[2]) <= s[0]+s[1]+s[2]) and (s[0]<=s[1]<=s[2])   )] # keep only triangle inequality and with sides ordered by increasing length
 
+
 ###################
 # variance and pt #
 ###################
@@ -304,7 +305,7 @@ def Fshape(k1,k2,k3):
 #    else :
 #        print "wrong model name"
 
-from simplemodel import P_integrand, DP_integrand, B_integrand, DB_integrand
+from fullmodel import P_integrand, DP_integrand, B_integrand, DB_integrand
 #from fullmodel import P_integrand, DP_integrand, B_integrand, DB_integrand
 
 
@@ -576,6 +577,67 @@ def compute_fisher(): # computes the fisher for shaperhere shape and datahere da
     for i in range(0,len(param)): # add priors on param
         Ftemp[i,i]+=priors[i];
     return Ftemp
+
+
+####################
+#  squeezed only   #
+####################
+
+def F_BB_squeezed() : #computes the fisher with bispectrum data
+    
+    if os.path.isfile(modelhere+'/temp/fb_'+shapehere+'_squeezed.npz') and recfb == "no":
+        data = np.load(modelhere+'/temp/fb_'+shapehere+'_squeezed.npz')
+        Ftemp = data['fb']
+        data.close()
+        print "fb squeezed loaded"
+    # print Ftemp
+    else :
+        print datetime.datetime.now()
+        print "computing fisher B"
+        print "there are %i triangles" % len(trianglelist)
+        print datetime.datetime.now()
+        
+        compute_pfid() # computes the powerspectrum if not yet done
+        compute_dbfid() # same for the derivatives of b
+        
+        Ftemp = np.zeros([len(param), len(param)],dtype=float)
+        
+        #computing indices of squeezed triangles with factor 10
+        indices_squeezed = ()
+        for t in range(len(trianglelist)):
+            if min(trianglelist[t][2],trianglelist[t][1]) >= 10*trianglelist[t][0] :
+                global indices_squeezed
+                indices_squeezed = np.append(indices_squeezed, t)
+
+        #print indices_squeezed.astype(int)
+        
+        for t in indices_squeezed.astype(int): # build fisher matrix summing only squeezd triangles
+            for j in range(len(param)):
+                for i in range(len(param)):
+                    Ftemp[i,j] += (dbfid[t][i] * dbfid[t][j]) / Var2Factor(trianglelist[t][0],trianglelist[t][1],trianglelist[t][2])
+        
+        print datetime.datetime.now()
+        print "F_B squeezed done"
+        #print Ftemp
+
+        np.savez(modelhere+'/temp/fb_'+shapehere+'_squeezed.npz',fb=Ftemp)
+    return Ftemp
+
+def compute_fisher_squeezed(): # computes the fisher for shaperhere shape and datahere data
+    #    load_model(modelname) # loads all definitions needed for the fisher // this furiously looks like a class instention
+    if datahere == "P":
+        Ftemp = F_PP()
+    elif datahere == "B" :
+        Ftemp = F_BB_squeezed()
+    elif datahere == "P+B" :
+        Ftemp = F_BB_squeezed()+F_PP()
+    else :
+        print "wrong data name"
+    for i in range(0,len(param)): # add priors on param
+        Ftemp[i,i]+=priors[i];
+    return Ftemp
+
+
 
 #######################
 #  Systematic shifts  #

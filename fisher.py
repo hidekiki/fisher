@@ -41,17 +41,23 @@ euclidlike = Survey(1.60354*10**10,0.000399415,0,0.16,1.,1.)
 ##############################################
 # most general model, set all fid /prior values : no need to edit this in general even when changin model.
 allparamleg = ['f_{NL}','b_{10}','b_{20}','b_{01}','b_{11}','b_{02}','\chi_1','\omega_{10}','\sigma','R'] #has to be the same in the same order as in fishfun
+allpriors = [0.,0.,0.,0.,0.,0.,0.,0.,0.,0.] # priors
 
-#allfiducial = [0.,1.51,0.00871,0.,0.,0.,0.,0.,5.76,1.6] # all zero except b01 b02
-allfiducial = [0.,0.454,-0.861,1.87,1.155,3.037,-2.024,-0.4821,5.76,0.8]# 10^12 msun
-#allfiducial = [0.,1.51,0.00871,9.38,16.62,74.17,-15.17,-13.09,5.76,1.6]# 10^13 msun fiducial values of parameters
-#allfiducial = [0.,5.36,2.3,48.3,281.6,1864,-150.1,-403.8,5.76,3.6]#10^14 msun
 
+
+#allfiducial = [0.,0.454,-0.861,1.87,1.155,3.037,-2.024,-0.4821,5.76,0.8]# 10^12 msun fiducial values of parameters
+#allfiducial = [0.,0.454,-0.361,1.87,1.94634,3.037,-2.024,-0.4821,5.76,0.8]# 10^12 msun constrained shift b20-b11
+#allfiducial = [0.,0.454,-0.361,1.87,1.155,3.037,-1.23266,-0.4821,5.76,0.8]# 10^12 msun constrained shift b20-chi1
+
+allfiducial = [0.,1.51,0.00871,9.38,16.62,74.17,-15.17,-13.09,5.76,1.6]# 10^13 msun fiducial values of parameters
 #allfiducial = [0.,1.51,0.50871,9.38,15.30,74.17,-15.17,-13.09,5.76,1.6]# 10^13 constrained shift b20-b11
 #allfiducial = [0.,1.51,0.50871,9.38,16.62,74.17,-16.49,-13.09,5.76,1.6]# 10^13 constrained shift b20-chi1
+#allfiducial = [0.,1.51,0.00871,0.,0.,0.,0.,0.,5.76,1.6] # all zero except b01 b02
 
+#allfiducial = [0.,5.36,2.3,48.3,281.6,1864,-150.1,-403.8,5.76,3.6]#10^14 msun fiducial values of parameters
+#allfiducial = [0.,5.36,2.8,48.3,193.984,1864,-150.1,-403.8,5.76,3.6]#10^14 msun constrained shift b20-b11
+#allfiducial = [0.,5.36,2.8,48.3,281.6,1864,-237.716,-403.8,5.76,3.6]#10^14 msun constrained shift b20-chi1
 
-allpriors = [0.,0.,0.,0.,0.,0.,0.,0.,0.,0.] # priors
 
 # all the models and combinations of data that we want to compute. for shape and data it's possible to specify more than 1 element : all combinations will be computed
 #models=[[["local",],["P","B","P+B"],[1., 1., 1., 1., 1., 1.,1., 1., 1., 1.],1.,0.16,"full"],
@@ -60,15 +66,15 @@ allpriors = [0.,0.,0.,0.,0.,0.,0.,0.,0.,0.] # priors
 
 
 # for simple model
-#models=[[["local",],["P","B","P+B"],[ 1.,1.,1.,0.,0.,0.,0.,0.,1.,1.],1.,0.16]
+models=[[["local",],["P","B","P+B"],[ 1.,1.,1.,1.,1.,1.,1.,1.,1.,1.],1.,0.16]
         #,[["equilateral",],["P","B","P+B"],[ 1.,1., 1.,0.,0.,0.,0.,0., 1., 1.],1.,0.16]
         ] #shape, data, parameters , n, kmax
 
 # for full model
 # all the models and combinations of data that we want to compute. for shape and data it's possible to specify more than 1 element : all combinations will be computed
-models=[[["local","equilateral","orthogonal"],["P","B","P+B"],[ 1.,1.,1.,1.,1.,1.,1.,1.,1.,1.],1.,0.16]
-        #,[["equilateral",],["P","B","P+B"],[ 1.,1., 1.,0.,0.,0.,0.,0., 1., 1.],1.,0.16]
-        ] #shape, data, parameters , n, kmax
+#models=[[["local","equilateral","orthogonal"],["P","B","P+B"],[ 1.,1.,1.,1.,1.,1.,1.,1.,1.,1.],1.,0.16]
+#        #,[["equilateral",],["P","B","P+B"],[ 1.,1., 1.,0.,0.,0.,0.,0., 1., 1.],1.,0.16]
+#        ] #shape, data, parameters , n, kmax
 
 #models=[[["orthogonal"],["P","B","P+B"],[ 1.,1., 1.,0.,0.,0.,0.,0., 1., 1.],1.,0.16,"simple"]]
 
@@ -373,6 +379,40 @@ for m in models :
 #                    pp.savefig(fig) #prints the fig to the pdf
 #                    pp.close() #closes pdf doc
 #                    plt.close(fig)
+
+            if chosenshape == "local" and chosendata != "P":
+                
+                fsq = open(modelname+'/'+chosenshape+'_squeezed.dat', 'w+') # opens a file where we print all output
+
+                print "\n"
+                print "###### data used : "+fishfun.datahere+" SQUEEZED ###### \n"
+            
+                Fsq = fishfun.compute_fisher_squeezed();
+                Fsqinv = linalg.inv(Fsq); #inverse
+                
+                ######################################
+                #  non marginalized errors on param  #
+                ######################################
+                print("######### non marg errors #########")
+                fsq.write("######### non marg errors ######### \n")
+                        
+                for i in range(0, len(param)):
+                    print "1-sigma error on %s, non marg : %f" % (param[i],1./np.sqrt(Fsq[i,i]))
+                    fsq.write("1-sigma error on %s, non marg : %f \n" % (param[i],1./np.sqrt(Fsq[i,i])))
+                
+                # fixing all parameter, it's a 1 param model, so factor is 1. for 1 sigma etc...
+                        
+                ######################################
+                #    marginalized errors on param    #
+                ######################################
+                print("######### marg errors #########")
+                fsq.write("######### marg errors ######### \n")
+                
+                for i in range(0, len(param)):
+                    print "1-sigma error on %s, marg over all other parameters : %f" % (param[i],1.*np.sqrt(Fsqinv[i,i]))
+                    fsq.write("1-sigma error on %s, marg over all other parameters : %f \n" % (param[i],1.*np.sqrt(Fsqinv[i,i])))
+                    #for 1 parameter of interest, the factor is 1 for 1 sigma, 2 for 2 sigma etc...
+    
         ########################################
         # for systematic shift in parameters   #
         ########################################
@@ -442,8 +482,10 @@ for m in models :
 #            #            f.write("ratio syst fnl %s error / stat fnl error : %f" % (chosenshape, ratio))
 #
 #                print("\n")
+                fsq.close()
             print("\n")
             f.close()
+            
         print("\n")
 print datetime.datetime.now()
 print("############ DONE ############ \n")

@@ -27,7 +27,7 @@ from pylab import *
 
 import os.path
 
-from extras import Survey
+#from extras import Survey
 
 import fishfun
 
@@ -51,9 +51,9 @@ allpriors = [0.,0.,0.,0.,0.,0.,0.,0.,0.,0.] # priors
 #        ] #shape, data, parameters , n, kmax
 
 # all the models and combinations of data that we want to compute. for shape and data it's possible to specify more than 1 element : all combinations will be computed
-models=[[["local",],["P","B","P+B"],[ 1.,1., 1.,0.,0.,0.,0.,0., 1., 1.],1.,0.16],
-        [["equilateral",],["P","B","P+B"],[ 1.,1., 1.,0.,0.,0.,0.,0., 1., 1.],1.,0.16]
-        ] #shape, data, parameters , n, kmax
+models=[[["local",],["B","P+B"],[ 1.,1., 1.,1.,1.,1.,1.,1., 1., 1.],1.,0.16],
+        #[["equilateral",],["P","B","P+B"],[ 1.,1., 1.,0.,0.,0.,0.,0., 1., 1.],1.,0.16]
+        ] #shape, data, parameters , n, kmax "P",
 
 #models=[[["orthogonal"],["P","B","P+B"],[ 1.,1., 1.,0.,0.,0.,0.,0., 1., 1.],1.,0.16,"simple"]]
 
@@ -127,12 +127,49 @@ for m in models :
           # print fishfun.B_integrand(fishfun.trianglelist[1],0.1,0.1,[fnlfid ,b10fid, b20fid, b01fid, b11fid, b02fid, chi1fid, w10fid, sigfid, Rfid])
           #fishfun.bkfid([0.1,0.1,0.1])
         
-            euclid = Survey(10**10,0.0004,0,0.16,1,1)
-            print euclid.V
-            print euclid.kmax
-            euclid.display()
+#            euclid = Survey(10**10,0.0004,0,0.16,1,1)
+#            print euclid.V
+#            print euclid.kmax
+#            euclid.display()
 #fishfun.compute_dpfid()
-            quit()
+
+
+            if chosenshape == "local" :
+            
+                fsq = open(modelname+'/'+chosenshape+'_squeezed.dat', 'w+') # opens a file where we print all output
+                
+                print "###### data used : "+fishfun.datahere+" SQUEEZED ###### \n"
+                
+                Fsq = fishfun.compute_fisher_squeezed();
+                
+                print Fsq
+                
+                Fsqinv = linalg.inv(Fsq); #inverse
+                
+                ######################################
+                #  non marginalized errors on param  #
+                ######################################
+                print("######### non marg errors #########")
+                fsq.write("######### non marg errors ######### \n")
+                
+                for i in range(0, len(param)):
+                    print "1-sigma error on %s, non marg : %f" % (param[i],1./np.sqrt(Fsq[i,i]))
+                    fsq.write("1-sigma error on %s, non marg : %f \n" % (param[i],1./np.sqrt(Fsq[i,i])))
+                
+                # fixing all parameter, it's a 1 param model, so factor is 1. for 1 sigma etc...
+                
+                ######################################
+                #    marginalized errors on param    #
+                ######################################
+                print("######### marg errors #########")
+                fsq.write("######### marg errors ######### \n")
+                
+                for i in range(0, len(param)):
+                    print "1-sigma error on %s, marg over all other parameters : %f" % (param[i],1.*np.sqrt(Fsqinv[i,i]))
+                    fsq.write("1-sigma error on %s, marg over all other parameters : %f \n" % (param[i],1.*np.sqrt(Fsqinv[i,i])))
+            #for 1 parameter of interest, the factor is 1 for 1 sigma, 2 for 2 sigma etc...
+
+
 #            print fishfun.compute_fisher()
         
 #        F =fishfun.F_BB()
@@ -154,7 +191,8 @@ for m in models :
 #        
 # quit()
 
-
+                fsq.close()
+            f.close()
 #k = 0.07
 
 #for i in range(10):

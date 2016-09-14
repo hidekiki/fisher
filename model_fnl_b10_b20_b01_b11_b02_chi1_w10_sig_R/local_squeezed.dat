@@ -1,0 +1,22 @@
+######### non marg errors ######### 
+1-sigma error on fnl, non marg : 1.331909 
+1-sigma error on b10, non marg : 0.002286 
+1-sigma error on b20, non marg : 0.041500 
+1-sigma error on b01, non marg : 0.154196 
+1-sigma error on b11, non marg : 0.403946 
+1-sigma error on b02, non marg : 2.415536 
+1-sigma error on chi1, non marg : 0.492163 
+1-sigma error on w10, non marg : 1.277233 
+1-sigma error on sig, non marg : 0.027543 
+1-sigma error on R, non marg : 0.013712 
+######### marg errors ######### 
+1-sigma error on fnl, marg over all other parameters : 1.988616 
+1-sigma error on b10, marg over all other parameters : 0.023241 
+1-sigma error on b20, marg over all other parameters : 0.701193 
+1-sigma error on b01, marg over all other parameters : 13.222665 
+1-sigma error on b11, marg over all other parameters : 33.411061 
+1-sigma error on b02, marg over all other parameters : 746.050478 
+1-sigma error on chi1, marg over all other parameters : 184.476570 
+1-sigma error on w10, marg over all other parameters : 434.476414 
+1-sigma error on sig, marg over all other parameters : 2.090160 
+1-sigma error on R, marg over all other parameters : 2.026684 
