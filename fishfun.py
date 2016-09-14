@@ -609,7 +609,7 @@ def F_BB_squeezed() : #computes the fisher with bispectrum data
                 global indices_squeezed
                 indices_squeezed = np.append(indices_squeezed, t)
 
-        print indices_squeezed.astype(int)
+        #print indices_squeezed.astype(int)
         
         for t in indices_squeezed.astype(int): # build fisher matrix summing only squeezd triangles
             for j in range(len(param)):
@@ -618,8 +618,8 @@ def F_BB_squeezed() : #computes the fisher with bispectrum data
         
         print datetime.datetime.now()
         print "F_B squeezed done"
-        print Ftemp
-        quit()
+        #print Ftemp
+
         np.savez(modelhere+'/temp/fb_'+shapehere+'_squeezed.npz',fb=Ftemp)
     return Ftemp
 

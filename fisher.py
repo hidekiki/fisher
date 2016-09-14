@@ -380,13 +380,14 @@ for m in models :
 #                    pp.close() #closes pdf doc
 #                    plt.close(fig)
 
-            if chosenshape == "local" :
+            if chosenshape == "local" and chosendata != "P":
                 
                 fsq = open(modelname+'/'+chosenshape+'_squeezed.dat', 'w+') # opens a file where we print all output
-            
+
+                print "\n"
                 print "###### data used : "+fishfun.datahere+" SQUEEZED ###### \n"
             
-                Fsq = fishfun.compute_fisher_sq();
+                Fsq = fishfun.compute_fisher_squeezed();
                 Fsqinv = linalg.inv(Fsq); #inverse
                 
                 ######################################
@@ -481,9 +482,10 @@ for m in models :
 #            #            f.write("ratio syst fnl %s error / stat fnl error : %f" % (chosenshape, ratio))
 #
 #                print("\n")
+                fsq.close()
             print("\n")
             f.close()
-            fsq.close()
+            
         print("\n")
 print datetime.datetime.now()
 print("############ DONE ############ \n")
