@@ -603,10 +603,11 @@ def F_BB_squeezed() : #computes the fisher with bispectrum data
         Ftemp = np.zeros([len(param), len(param)],dtype=float)
         
         #computing indices of squeezed triangles with factor 10
+        
         indices_squeezed = ()
+        
         for t in range(len(trianglelist)):
             if min(trianglelist[t][2],trianglelist[t][1]) >= 10*trianglelist[t][0] :
-                global indices_squeezed
                 indices_squeezed = np.append(indices_squeezed, t)
 
         #print indices_squeezed.astype(int)

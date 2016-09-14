@@ -382,7 +382,7 @@ for m in models :
 
             if chosenshape == "local" and chosendata != "P":
                 
-                fsq = open(modelname+'/'+chosenshape+'_squeezed.dat', 'w+') # opens a file where we print all output
+                fsq = open(modelname+'/'+chosendata+'_'+chosenshape+'_squeezed.dat', 'w+') # opens a file where we print all output
 
                 print "\n"
                 print "###### data used : "+fishfun.datahere+" SQUEEZED ###### \n"
