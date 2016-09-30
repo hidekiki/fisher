@@ -25,7 +25,7 @@ qmax = 10. #default
 ncores = multiprocessing.cpu_count()-1
 n=1.; # default consider every n*kf for the bispectrum . for the power specutrm it computes every kf. 
 ni = 2; #number iterations
-ne = 2000; #number of evaluations
+ne = 3500; #number of evaluations
 
 #######################
 #  survey parameters  #
@@ -61,11 +61,13 @@ pshift = []
 bfid = []
 bshift = []
 dpfid = []
+dpfid_sq = []
 dbfid = []
 pointlistP = []
 trianglelist =[]
 
 recpfid = "no" # whether to recomputed pfid, fp, fb or load it from file if it already exists
+recpfid_sq = "no"
 recpshift = "no"
 recbfid = "no"
 recbshift = "no"
@@ -93,6 +95,7 @@ w10fid = 0.
 Rfid = 0.
 sigfid = 0.
 chi1fid = 0.
+bng = 0.
 
 # for the defintion for syst shifts fucntions, set by "set_seshift" in extras.py
 fnlshift = 0. # only the active ones will be set to their values.
@@ -123,7 +126,7 @@ stri = 0;
 chunksize = 100 # divide the triangle list in chunks of size "chunksize". carefull not to change the chunksize between runs!
 
 #sets dedicated names for the fidvalues
-def initialize(act,allfid,allpri,nn,kkhigh):
+def initialize(act,allfid,allpri,nn,kkhigh,bngg):
     global qmax
     global khigh
     global n
@@ -137,6 +140,7 @@ def initialize(act,allfid,allpri,nn,kkhigh):
     global Rfid
     global sigfid
     global chi1fid
+    global bng
     global param
     global priors
     global fiducial
@@ -160,6 +164,7 @@ def initialize(act,allfid,allpri,nn,kkhigh):
     fiducial = set_active(act,allfid)
     qmax = 5./Rfid
     khigh = kkhigh
+    bng = bngg
     n = nn
     compute_list()
 
@@ -305,8 +310,8 @@ def Fshape(k1,k2,k3):
 #    else :
 #        print "wrong model name"
 
-from fullmodel import P_integrand, DP_integrand, B_integrand, DB_integrand
-#from fullmodel import P_integrand, DP_integrand, B_integrand, DB_integrand
+from fullmodel import P_integrand, DP_integrand, B_integrand, DB_integrand, DP_sq_integrand
+#from simplemodel import P_integrand, DP_integrand, B_integrand, DB_integrand, DP_sq_integrand
 
 
 # integrates and returns power spectrum for a given k general values of parameters (for use in "shift")
@@ -315,7 +320,7 @@ def pk(k,(fnlfid ,b10fid, b20fid, b01fid, b11fid, b02fid, chi1fid, w10fid, sigfi
     def f(y):
         return P_integrand(k,y[0],y[1],[fnlfid ,b10fid, b20fid, b01fid, b11fid, b02fid, chi1fid, w10fid, sigfid, Rfid])
     integ = vegas.Integrator([[qmin, qmax], [-1.,1.]])
-    result = integ(f, nitn=ni, neval=ne)
+    result = integ(f, nitn=ni, neval=2*ne)
     #print result.summary()
     return result.mean
 
@@ -350,7 +355,7 @@ def dpkpar(k,par):
     def f(y):
         return  DP_integrand(k,y[0],y[1],[fnlfid ,b10fid, b20fid, b01fid, b11fid, b02fid, chi1fid, w10fid, sigfid, Rfid],par)
     integ = vegas.Integrator([[qmin, qmax], [-1, 1]])
-    result = integ(f, nitn=ni, neval = 1.5*ne) # slightly more evaluations and iterations for the derivative to be sure to have about few percent accuracy
+    result = integ(f, nitn=ni, neval = 2*ne) # slightly more evaluations and iterations for the derivative to be sure to have about few percent accuracy
     print result.summary()
     return result.mean
 
@@ -443,7 +448,7 @@ def dbkpar(k,par):
     def f(y):
         return  DB_integrand(k,y[0],y[1],[fnlfid ,b10fid, b20fid, b01fid, b11fid, b02fid, chi1fid, w10fid, sigfid, Rfid],par)
     integ = vegas.Integrator([[qmin, qmax], [-1, 1]])
-    result = integ(f, nitn=ni, neval = 1.5*ne) # 1 more than the rest
+    result = integ(f, nitn=ni, neval = ne) # 1 more than the rest
     print result.summary()
     return result.mean
 
@@ -582,6 +587,84 @@ def compute_fisher(): # computes the fisher for shaperhere shape and datahere da
 ####################
 #  squeezed only   #
 ####################
+###### derivatives of squeezd spectrum ######
+# integrates and returns partial derivative of power spectrum wrt a parameter for a given k and fid val of param
+def dpkpar_sq(k,par):
+    def f(y):
+        return  DP_sq_integrand(k,y[0],y[1],[fnlfid ,b10fid, b20fid, b01fid, b11fid, b02fid, chi1fid, w10fid, sigfid, Rfid],bng,par)
+    integ = vegas.Integrator([[qmin, qmax], [-1, 1]])
+    result = integ(f, nitn=ni, neval = 2*ne) # slightly more evaluations and iterations for the derivative to be sure to have about few percent accuracy
+    print result.summary()
+    return result.mean
+
+def dpk_sq(k): # return an array of the derivatives of P wrt to each param for given k
+    print datetime.datetime.now()
+    print " k = %f.3" % k
+    return [ dpkpar_sq(k,x) for x in param ]
+
+def compute_dpfid_squeezed(): #computes the derivatives of p wrt each param over the list of k pointlist
+    global dpfid_sq
+    
+    if os.path.isfile(modelhere+'/temp/dpfid_'+shapehere+'_squeezed.npz') and recdpfid_sq == "no":
+        data = np.load(modelhere+'/temp/dpfid_'+shapehere+'_squeezed.npz')
+        dpfid_sq = data['dpfid_sq'].tolist()
+        data.close()
+        print "dpfid squeezed loaded"
+    #print dpfid_sq
+    else :
+        print datetime.datetime.now()
+        print "computing dpfid (dP/dlambda) squeezed: there are %i k's" % len(pointlistP)
+        
+        poolP = multiprocessing.Pool(processes=ncores); # start a multiprocess
+        dpfid_sq = poolP.map(dpk_sq, pointlistP)
+        poolP.close()
+        
+        #print dpfid sq
+        print datetime.datetime.now()
+        print "dpfid squeezed done"
+        np.savez(modelhere+'/temp/dpfid_'+shapehere+'_squeezed.npz',dpfid_sq=np.asarray(dpfid_sq))
+
+def Fel_PP_squeezed(k): #element of the sum of the fisher matrix for given k, reads from computed quantities
+    #print datetime.datetime.now()
+    #print "computing k = %f.3" % k
+    
+    Ftemp = np.zeros([len(param), len(param)],dtype=float)
+    
+    for i in range(len(param)):                 #builds the fisher matrix from derivatives and the variance
+        for j in range(len(param)):
+            Ftemp[i,j] = dpfid_sq[pointlistP.index(k)][i]*dpfid_sq[pointlistP.index(k)][j]/var_p(k)
+
+    return Ftemp
+
+def F_PP_squeezed() : #computes the fisher with power spectrum data : about 35min (integrals)
+    
+    if os.path.isfile(modelhere+'/temp/fp_'+shapehere+'_squeezed.npz') and recfp == "no": # loads the fisher if already computed
+        data = np.load(modelhere+'/temp/fp_'+shapehere+'_squeezed.npz')
+        Ftemp = data['fp']
+        data.close()
+        print "fp squeezed loaded"
+    # print Ftemp
+    else :
+        print datetime.datetime.now()
+        print "computing fp squeezed"
+        compute_pfid() # computes the ps
+        compute_dpfid_squeezed() # computes the derivatives of ps
+        print len(pointlistP)
+        print len(param)
+        print len(pfid)
+        print len(dpfid_sq[1])
+        
+        Ftemp = np.zeros([len(param), len(param)],dtype=float)
+        
+        poolP = multiprocessing.Pool(processes=ncores); # start a multiprocess
+        Ftemp = np.sum(poolP.map(Fel_PP_squeezed, pointlistP ),axis=0); # parallel evaluate to speed up PP does not dep on shape so we take it out of the loop. for the defs to be shared, the B-pool needs to be after chosenshape has been set (in the loop)
+        poolP.close()
+        
+        print datetime.datetime.now()
+        print "F_P squeezed done"
+        # print Ftemp
+        np.savez(modelhere+'/temp/fp_'+shapehere+'_squeezed.npz',fp=Ftemp)
+    return Ftemp
 
 def F_BB_squeezed() : #computes the fisher with bispectrum data
     
@@ -624,14 +707,17 @@ def F_BB_squeezed() : #computes the fisher with bispectrum data
         np.savez(modelhere+'/temp/fb_'+shapehere+'_squeezed.npz',fb=Ftemp)
     return Ftemp
 
+
+
+
 def compute_fisher_squeezed(): # computes the fisher for shaperhere shape and datahere data
     #    load_model(modelname) # loads all definitions needed for the fisher // this furiously looks like a class instention
     if datahere == "P":
-        Ftemp = F_PP()
+        Ftemp = F_PP_squeezed()
     elif datahere == "B" :
         Ftemp = F_BB_squeezed()
     elif datahere == "P+B" :
-        Ftemp = F_BB_squeezed()+F_PP()
+        Ftemp = F_BB_squeezed()+F_PP_squeezed()
     else :
         print "wrong data name"
     for i in range(0,len(param)): # add priors on param

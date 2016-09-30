@@ -43,8 +43,6 @@ euclidlike = Survey(1.60354*10**10,0.000399415,0,0.16,1.,1.)
 allparamleg = ['f_{NL}','b_{10}','b_{20}','b_{01}','b_{11}','b_{02}','\chi_1','\omega_{10}','\sigma','R'] #has to be the same in the same order as in fishfun
 allpriors = [0.,0.,0.,0.,0.,0.,0.,0.,0.,0.] # priors
 
-
-
 #allfiducial = [0.,0.454,-0.861,1.87,1.155,3.037,-2.024,-0.4821,5.76,0.8]# 10^12 msun fiducial values of parameters
 #allfiducial = [0.,0.454,-0.361,1.87,1.94634,3.037,-2.024,-0.4821,5.76,0.8]# 10^12 msun constrained shift b20-b11
 #allfiducial = [0.,0.454,-0.361,1.87,1.155,3.037,-1.23266,-0.4821,5.76,0.8]# 10^12 msun constrained shift b20-chi1
@@ -58,25 +56,32 @@ allfiducial = [0.,1.51,0.00871,9.38,16.62,74.17,-15.17,-13.09,5.76,1.6]# 10^13 m
 #allfiducial = [0.,5.36,2.8,48.3,193.984,1864,-150.1,-403.8,5.76,3.6]#10^14 msun constrained shift b20-b11
 #allfiducial = [0.,5.36,2.8,48.3,281.6,1864,-237.716,-403.8,5.76,3.6]#10^14 msun constrained shift b20-chi1
 
-
 # all the models and combinations of data that we want to compute. for shape and data it's possible to specify more than 1 element : all combinations will be computed
 #models=[[["local",],["P","B","P+B"],[1., 1., 1., 1., 1., 1.,1., 1., 1., 1.],1.,0.16,"full"],
 #       [["equilateral",],["P","B","P+B"],[1., 1., 1., 1., 1., 1.,1., 1., 1., 1.],1.,0.16,"full"]
 #        ] #shape, data, parameters , n, kmax
 
+# VALUE OF BNG FOR SQUEEZED POWER SPECTRUM
+
+#bng = -0.908122 # bng for simple model 10^12 mass
+#bng = 0.910357 # bng for full model 10^12 mass
+#bng = 0.00445277 # bng for simple model 10^13 mass
+bng = 2.58659 # bng for full model 10^13 mass
+#bng = 0.461619 # bng for simple model 10^14 mass
+#bng = 4.20369 # bng for full model 10^14 mass
 
 # for simple model
-models=[[["local",],["P","B","P+B"],[ 1.,1.,1.,1.,1.,1.,1.,1.,1.,1.],1.,0.16]
-        #,[["equilateral",],["P","B","P+B"],[ 1.,1., 1.,0.,0.,0.,0.,0., 1., 1.],1.,0.16]
+models=[[["local",],["P",],[ 1.,1.,1.,1.,1.,1.,1.,1.,1.,1.],1.,0.16,bng]
+        #,[["equilateral",],["P","B","P+B"],[ 1.,1., 1.,0.,0.,0.,0.,0., 1., 1.],1.,0.16,bng]
         ] #shape, data, parameters , n, kmax
 
 # for full model
 # all the models and combinations of data that we want to compute. for shape and data it's possible to specify more than 1 element : all combinations will be computed
-#models=[[["local","equilateral","orthogonal"],["P","B","P+B"],[ 1.,1.,1.,1.,1.,1.,1.,1.,1.,1.],1.,0.16]
-#        #,[["equilateral",],["P","B","P+B"],[ 1.,1., 1.,0.,0.,0.,0.,0., 1., 1.],1.,0.16]
+#models=[[["local","equilateral","orthogonal"],["P","B","P+B"],[ 1.,1.,1.,1.,1.,1.,1.,1.,1.,1.],1.,0.16,bng]
+#        #,[["equilateral",],["P","B","P+B"],[ 1.,1., 1.,0.,0.,0.,0.,0., 1., 1.],1.,0.16,bng]
 #        ] #shape, data, parameters , n, kmax
 
-#models=[[["orthogonal"],["P","B","P+B"],[ 1.,1., 1.,0.,0.,0.,0.,0., 1., 1.],1.,0.16,"simple"]]
+#models=[[["orthogonal"],["P","B","P+B"],[ 1.,1., 1.,0.,0.,0.,0.,0., 1., 1.],1.,0.16,bng]]
 
 #########################
 #    Loop over models   #
@@ -87,7 +92,8 @@ for m in models :
     active = m[2] # choose which parameters to include in the model
     nn=m[3] #set n
     kkhigh = m[4] #set kmax
-    fishfun.initialize(active, allfiducial, allpriors,nn,kkhigh); # initialization
+    bngg = m[5]
+    fishfun.initialize(active, allfiducial, allpriors,nn,kkhigh,bngg); # initialization
     fishfun.model_output()
     param = fishfun.param # for convienience
     fnlindex = param.index("fnl") #for convienience
@@ -380,7 +386,7 @@ for m in models :
 #                    pp.close() #closes pdf doc
 #                    plt.close(fig)
 
-            if chosenshape == "local" and chosendata != "P":
+            if chosenshape == "local" :
                 
                 fsq = open(modelname+'/'+chosendata+'_'+chosenshape+'_squeezed.dat', 'w+') # opens a file where we print all output
 
