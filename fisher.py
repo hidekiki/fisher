@@ -3,15 +3,15 @@ print("\n \n")
 print("######### COMPUTING... ######### \n")
 
 #importing useful packages
-import sys
-import csv
+#import sys
+#import csv
 
-import matplotlib
-from matplotlib import pyplot as plt
-import matplotlib.cm as cm
-from matplotlib.patches import Ellipse
-from matplotlib import rc
-from matplotlib.backends.backend_pdf import PdfPages
+#import matplotlib
+#from matplotlib import pyplot as plt
+#import matplotlib.cm as cm
+#from matplotlib.patches import Ellipse
+#from matplotlib import rc
+#from matplotlib.backends.backend_pdf import PdfPages
 
 import numpy as np
 from numpy import *
@@ -23,7 +23,8 @@ from scipy import misc
 from scipy import interpolate
 from scipy.stats import chi2
 
-from pylab import *
+#from pylab import *
+import datetime
 
 import os.path
 
@@ -71,7 +72,7 @@ bng = 2.58659 # bng for full model 10^13 mass
 #bng = 4.20369 # bng for full model 10^14 mass
 
 # for simple model
-models=[[["local",],["P",],[ 1.,1.,1.,1.,1.,1.,1.,1.,1.,1.],1.,0.16,bng]
+models=[[["local",],["P","B","P+B"],[ 1.,1.,1.,1.,1.,1.,1.,1.,1.,1.],1.,0.16,bng]
         #,[["equilateral",],["P","B","P+B"],[ 1.,1., 1.,0.,0.,0.,0.,0., 1., 1.],1.,0.16,bng]
         ] #shape, data, parameters , n, kmax
 
@@ -120,8 +121,8 @@ for m in models :
     label_size = 12.; # font size for plots legends
     title_size = 10.  ; # font size for plots titles
     tick_size = 9.
-    plt.rcParams['xtick.labelsize'] = tick_size
-    plt.rcParams['ytick.labelsize'] = tick_size
+    #plt.rcParams['xtick.labelsize'] = tick_size
+    #plt.rcParams['ytick.labelsize'] = tick_size
 
     alpha1 = np.sqrt(chi2.ppf(0.6827, 2, loc=0, scale=1)); # which ellipses to draw amount to multiply the eigenvalues
     alpha2 = np.sqrt(chi2.ppf(0.9545, 2, loc=0, scale=1));

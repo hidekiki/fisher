@@ -1,0 +1,204 @@
+######### non marg errors ######### 
+1-sigma error on fnl, non marg : 0.502569 
+1-sigma error on b10, non marg : 0.001166 
+1-sigma error on b20, non marg : 0.004654 
+1-sigma error on b01, non marg : 0.164673 
+1-sigma error on b11, non marg : 0.238758 
+1-sigma error on b02, non marg : 42.535076 
+1-sigma error on chi1, non marg : 0.634845 
+1-sigma error on w10, non marg : 104.427459 
+1-sigma error on sig, non marg : 0.022385 
+1-sigma error on R, non marg : 0.027859 
+######### marg errors ######### 
+1-sigma error on fnl, marg over all other parameters : 0.726692 
+1-sigma error on b10, marg over all other parameters : 0.017905 
+1-sigma error on b20, marg over all other parameters : 0.068640 
+1-sigma error on b01, marg over all other parameters : 23.052665 
+1-sigma error on b11, marg over all other parameters : 22.842264 
+1-sigma error on b02, marg over all other parameters : 718.005800 
+1-sigma error on chi1, marg over all other parameters : 33.671767 
+1-sigma error on w10, marg over all other parameters : 424.493738 
+1-sigma error on sig, marg over all other parameters : 0.480833 
+1-sigma error on R, marg over all other parameters : 5.504599 
+1-sigma error on fnl, marg over all param at fixed R and sigma: 0.719201.2
+1-sigma error on fnl, marg over all param at fixed b10, b20, R, sigma: 0.676978.2
+ ######### correlation coefficient fnl - b10 : -0.033443 
+######### fnl - b10 plane at FIXED b20, b01, b11, b02, chi1, w10, sig, R ######### 
+1-sigma error on fnl, marg over b10 at fixed b20, b01, b11, b02, chi1, w10, sig, R: 0.678922 
+1-sigma error on b10, marg over fnl at fixed b20, b01, b11, b02, chi1, w10, sig, R: 0.001575 
+ ######### correlation coefficient fnl - b20 : -0.064550 
+######### fnl - b20 plane at FIXED b10, b01, b11, b02, chi1, w10, sig, R ######### 
+1-sigma error on fnl, marg over b20 at fixed b10, b01, b11, b02, chi1, w10, sig, R: 0.652267 
+1-sigma error on b20, marg over fnl at fixed b10, b01, b11, b02, chi1, w10, sig, R: 0.006041 
+ ######### correlation coefficient fnl - b01 : 0.131991 
+######### fnl - b01 plane at FIXED b10, b20, b11, b02, chi1, w10, sig, R ######### 
+1-sigma error on fnl, marg over b01 at fixed b10, b20, b11, b02, chi1, w10, sig, R: 0.581439 
+1-sigma error on b01, marg over fnl at fixed b10, b20, b11, b02, chi1, w10, sig, R: 0.190515 
+ ######### correlation coefficient fnl - b11 : 0.091428 
+######### fnl - b11 plane at FIXED b10, b20, b01, b02, chi1, w10, sig, R ######### 
+1-sigma error on fnl, marg over b11 at fixed b10, b20, b01, b02, chi1, w10, sig, R: 0.587262 
+1-sigma error on b11, marg over fnl at fixed b10, b20, b01, b02, chi1, w10, sig, R: 0.278993 
+ ######### correlation coefficient fnl - b02 : 0.092564 
+######### fnl - b02 plane at FIXED b10, b20, b01, b11, chi1, w10, sig, R ######### 
+1-sigma error on fnl, marg over b02 at fixed b10, b20, b01, b11, chi1, w10, sig, R: 0.531640 
+1-sigma error on b02, marg over fnl at fixed b10, b20, b01, b11, chi1, w10, sig, R: 44.995472 
+ ######### correlation coefficient fnl - chi1 : -0.076353 
+######### fnl - chi1 plane at FIXED b10, b20, b01, b11, b02, w10, sig, R ######### 
+1-sigma error on fnl, marg over chi1 at fixed b10, b20, b01, b11, b02, w10, sig, R: 0.552629 
+1-sigma error on chi1, marg over fnl at fixed b10, b20, b01, b11, b02, w10, sig, R: 0.698081 
+ ######### correlation coefficient fnl - w10 : 0.118790 
+######### fnl - w10 plane at FIXED b10, b20, b01, b11, b02, chi1, sig, R ######### 
+1-sigma error on fnl, marg over w10 at fixed b10, b20, b01, b11, b02, chi1, sig, R: 0.558810 
+1-sigma error on w10, marg over fnl at fixed b10, b20, b01, b11, b02, chi1, sig, R: 116.113631 
+ ######### correlation coefficient fnl - sig : 0.020247 
+######### fnl - sig plane at FIXED b10, b20, b01, b11, b02, chi1, w10, R ######### 
+1-sigma error on fnl, marg over sig at fixed b10, b20, b01, b11, b02, chi1, w10, R: 0.613842 
+1-sigma error on sig, marg over fnl at fixed b10, b20, b01, b11, b02, chi1, w10, R: 0.027341 
+ ######### correlation coefficient fnl - R : 0.121545 
+######### fnl - R plane at FIXED b10, b20, b01, b11, b02, chi1, w10, sig ######### 
+1-sigma error on fnl, marg over R at fixed b10, b20, b01, b11, b02, chi1, w10, sig: 0.586953 
+1-sigma error on R, marg over fnl at fixed b10, b20, b01, b11, b02, chi1, w10, sig: 0.032537 
+ ######### correlation coefficient b10 - b20 : -0.947758 
+######### b10 - b20 plane at FIXED fnl, b01, b11, b02, chi1, w10, sig, R ######### 
+1-sigma error on b10, marg over b20 at fixed fnl, b01, b11, b02, chi1, w10, sig, R: 0.005323 
+1-sigma error on b20, marg over b10 at fixed fnl, b01, b11, b02, chi1, w10, sig, R: 0.021257 
+ ######### correlation coefficient b10 - b01 : -0.071281 
+######### b10 - b01 plane at FIXED fnl, b20, b11, b02, chi1, w10, sig, R ######### 
+1-sigma error on b10, marg over b01 at fixed fnl, b20, b11, b02, chi1, w10, sig, R: 0.002277 
+1-sigma error on b01, marg over b10 at fixed fnl, b20, b11, b02, chi1, w10, sig, R: 0.321745 
+ ######### correlation coefficient b10 - b11 : -0.117095 
+######### b10 - b11 plane at FIXED fnl, b20, b01, b02, chi1, w10, sig, R ######### 
+1-sigma error on b10, marg over b11 at fixed fnl, b20, b01, b02, chi1, w10, sig, R: 0.002440 
+1-sigma error on b11, marg over b10 at fixed fnl, b20, b01, b02, chi1, w10, sig, R: 0.499826 
+ ######### correlation coefficient b10 - b02 : -0.193132 
+######### b10 - b02 plane at FIXED fnl, b20, b01, b11, chi1, w10, sig, R ######### 
+1-sigma error on b10, marg over b02 at fixed fnl, b20, b01, b11, chi1, w10, sig, R: 0.001541 
+1-sigma error on b02, marg over b10 at fixed fnl, b20, b01, b11, chi1, w10, sig, R: 56.242900 
+ ######### correlation coefficient b10 - chi1 : 0.155222 
+######### b10 - chi1 plane at FIXED fnl, b20, b01, b11, b02, w10, sig, R ######### 
+1-sigma error on b10, marg over chi1 at fixed fnl, b20, b01, b11, b02, w10, sig, R: 0.001843 
+1-sigma error on chi1, marg over b10 at fixed fnl, b20, b01, b11, b02, w10, sig, R: 1.004034 
+ ######### correlation coefficient b10 - w10 : 0.353414 
+######### b10 - w10 plane at FIXED fnl, b20, b01, b11, b02, chi1, sig, R ######### 
+1-sigma error on b10, marg over w10 at fixed fnl, b20, b01, b11, b02, chi1, sig, R: 0.001527 
+1-sigma error on w10, marg over b10 at fixed fnl, b20, b01, b11, b02, chi1, sig, R: 136.786049 
+ ######### correlation coefficient b10 - sig : 0.756020 
+######### b10 - sig plane at FIXED fnl, b20, b01, b11, b02, chi1, w10, R ######### 
+1-sigma error on b10, marg over sig at fixed fnl, b20, b01, b11, b02, chi1, w10, R: 0.002982 
+1-sigma error on sig, marg over b10 at fixed fnl, b20, b01, b11, b02, chi1, w10, R: 0.057265 
+ ######### correlation coefficient b10 - R : -0.154589 
+######### b10 - R plane at FIXED fnl, b20, b01, b11, b02, chi1, w10, sig ######### 
+1-sigma error on b10, marg over R at fixed fnl, b20, b01, b11, b02, chi1, w10, sig: 0.002361 
+1-sigma error on R, marg over b10 at fixed fnl, b20, b01, b11, b02, chi1, w10, sig: 0.056430 
+ ######### correlation coefficient b20 - b01 : 0.041680 
+######### b20 - b01 plane at FIXED fnl, b10, b11, b02, chi1, w10, sig, R ######### 
+1-sigma error on b20, marg over b01 at fixed fnl, b10, b11, b02, chi1, w10, sig, R: 0.010317 
+1-sigma error on b01, marg over b20 at fixed fnl, b10, b11, b02, chi1, w10, sig, R: 0.365021 
+ ######### correlation coefficient b20 - b11 : 0.042297 
+######### b20 - b11 plane at FIXED fnl, b10, b01, b02, chi1, w10, sig, R ######### 
+1-sigma error on b20, marg over b11 at fixed fnl, b10, b01, b02, chi1, w10, sig, R: 0.011176 
+1-sigma error on b11, marg over b20 at fixed fnl, b10, b01, b02, chi1, w10, sig, R: 0.573290 
+ ######### correlation coefficient b20 - b02 : 0.231548 
+######### b20 - b02 plane at FIXED fnl, b10, b01, b11, chi1, w10, sig, R ######### 
+1-sigma error on b20, marg over b02 at fixed fnl, b10, b01, b11, chi1, w10, sig, R: 0.006629 
+1-sigma error on b02, marg over b20 at fixed fnl, b10, b01, b11, chi1, w10, sig, R: 60.584518 
+ ######### correlation coefficient b20 - chi1 : -0.133394 
+######### b20 - chi1 plane at FIXED fnl, b10, b01, b11, b02, w10, sig, R ######### 
+1-sigma error on b20, marg over chi1 at fixed fnl, b10, b01, b11, b02, w10, sig, R: 0.008773 
+1-sigma error on chi1, marg over b20 at fixed fnl, b10, b01, b11, b02, w10, sig, R: 1.196582 
+ ######### correlation coefficient b20 - w10 : -0.283183 
+######### b20 - w10 plane at FIXED fnl, b10, b01, b11, b02, chi1, sig, R ######### 
+1-sigma error on b20, marg over w10 at fixed fnl, b10, b01, b11, b02, chi1, sig, R: 0.005420 
+1-sigma error on w10, marg over b20 at fixed fnl, b10, b01, b11, b02, chi1, sig, R: 121.593092 
+ ######### correlation coefficient b20 - sig : -0.674909 
+######### b20 - sig plane at FIXED fnl, b10, b01, b11, b02, chi1, w10, R ######### 
+1-sigma error on b20, marg over sig at fixed fnl, b10, b01, b11, b02, chi1, w10, R: 0.010520 
+1-sigma error on sig, marg over b20 at fixed fnl, b10, b01, b11, b02, chi1, w10, R: 0.050593 
+ ######### correlation coefficient b20 - R : 0.104824 
+######### b20 - R plane at FIXED fnl, b10, b01, b11, b02, chi1, w10, sig ######### 
+1-sigma error on b20, marg over R at fixed fnl, b10, b01, b11, b02, chi1, w10, sig: 0.010347 
+1-sigma error on R, marg over b20 at fixed fnl, b10, b01, b11, b02, chi1, w10, sig: 0.061933 
+ ######### correlation coefficient b01 - b11 : 0.848726 
+######### b01 - b11 plane at FIXED fnl, b10, b20, b02, chi1, w10, sig, R ######### 
+1-sigma error on b01, marg over b11 at fixed fnl, b10, b20, b02, chi1, w10, sig, R: 2.587514 
+1-sigma error on b11, marg over b01 at fixed fnl, b10, b20, b02, chi1, w10, sig, R: 3.751621 
+ ######### correlation coefficient b01 - b02 : 0.884497 
+######### b01 - b02 plane at FIXED fnl, b10, b20, b11, chi1, w10, sig, R ######### 
+1-sigma error on b01, marg over b02 at fixed fnl, b10, b20, b11, chi1, w10, sig, R: 0.416019 
+1-sigma error on b02, marg over b01 at fixed fnl, b10, b20, b11, chi1, w10, sig, R: 107.457963 
+ ######### correlation coefficient b01 - chi1 : -0.924354 
+######### b01 - chi1 plane at FIXED fnl, b10, b20, b11, b02, w10, sig, R ######### 
+1-sigma error on b01, marg over chi1 at fixed fnl, b10, b20, b11, b02, w10, sig, R: 0.589304 
+1-sigma error on chi1, marg over b01 at fixed fnl, b10, b20, b11, b02, w10, sig, R: 2.271882 
+ ######### correlation coefficient b01 - w10 : -0.490908 
+######### b01 - w10 plane at FIXED fnl, b10, b20, b11, b02, chi1, sig, R ######### 
+1-sigma error on b01, marg over w10 at fixed fnl, b10, b20, b11, b02, chi1, sig, R: 0.183036 
+1-sigma error on w10, marg over b01 at fixed fnl, b10, b20, b11, b02, chi1, sig, R: 116.072723 
+ ######### correlation coefficient b01 - sig : -0.363566 
+######### b01 - sig plane at FIXED fnl, b10, b20, b11, b02, chi1, w10, R ######### 
+1-sigma error on b01, marg over sig at fixed fnl, b10, b20, b11, b02, chi1, w10, R: 0.584648 
+1-sigma error on sig, marg over b01 at fixed fnl, b10, b20, b11, b02, chi1, w10, R: 0.079475 
+ ######### correlation coefficient b01 - R : 0.983084 
+######### b01 - R plane at FIXED fnl, b10, b20, b11, b02, chi1, w10, sig ######### 
+1-sigma error on b01, marg over R at fixed fnl, b10, b20, b11, b02, chi1, w10, sig: 3.171693 
+1-sigma error on R, marg over b01 at fixed fnl, b10, b20, b11, b02, chi1, w10, sig: 0.536588 
+ ######### correlation coefficient b11 - b02 : 0.880324 
+######### b11 - b02 plane at FIXED fnl, b10, b20, b01, chi1, w10, sig, R ######### 
+1-sigma error on b11, marg over b02 at fixed fnl, b10, b20, b01, chi1, w10, sig, R: 0.583790 
+1-sigma error on b02, marg over b11 at fixed fnl, b10, b20, b01, chi1, w10, sig, R: 104.003037 
+ ######### correlation coefficient b11 - chi1 : -0.963415 
+######### b11 - chi1 plane at FIXED fnl, b10, b20, b01, b02, w10, sig, R ######### 
+1-sigma error on b11, marg over chi1 at fixed fnl, b10, b20, b01, b02, w10, sig, R: 0.877571 
+1-sigma error on chi1, marg over b11 at fixed fnl, b10, b20, b01, b02, w10, sig, R: 2.333417 
+ ######### correlation coefficient b11 - w10 : -0.546493 
+######### b11 - w10 plane at FIXED fnl, b10, b20, b01, b02, chi1, sig, R ######### 
+1-sigma error on b11, marg over w10 at fixed fnl, b10, b20, b01, b02, chi1, sig, R: 0.267397 
+1-sigma error on w10, marg over b11 at fixed fnl, b10, b20, b01, b02, chi1, sig, R: 116.953533 
+ ######### correlation coefficient b11 - sig : -0.216980 
+######### b11 - sig plane at FIXED fnl, b10, b20, b01, b02, chi1, w10, R ######### 
+1-sigma error on b11, marg over sig at fixed fnl, b10, b20, b01, b02, chi1, w10, R: 0.895929 
+1-sigma error on sig, marg over b11 at fixed fnl, b10, b20, b01, b02, chi1, w10, R: 0.083999 
+ ######### correlation coefficient b11 - R : 0.919601 
+######### b11 - R plane at FIXED fnl, b10, b20, b01, b02, chi1, w10, sig ######### 
+1-sigma error on b11, marg over R at fixed fnl, b10, b20, b01, b02, chi1, w10, sig: 3.130417 
+1-sigma error on R, marg over b11 at fixed fnl, b10, b20, b01, b02, chi1, w10, sig: 0.365272 
+ ######### correlation coefficient b02 - chi1 : -0.955342 
+######### b02 - chi1 plane at FIXED fnl, b10, b20, b01, b11, w10, sig, R ######### 
+1-sigma error on b02, marg over chi1 at fixed fnl, b10, b20, b01, b11, w10, sig, R: 151.018035 
+1-sigma error on chi1, marg over b02 at fixed fnl, b10, b20, b01, b11, w10, sig, R: 2.253976 
+ ######### correlation coefficient b02 - w10 : -0.442095 
+######### b02 - w10 plane at FIXED fnl, b10, b20, b01, b11, chi1, sig, R ######### 
+1-sigma error on b02, marg over w10 at fixed fnl, b10, b20, b01, b11, chi1, sig, R: 43.140045 
+1-sigma error on w10, marg over b02 at fixed fnl, b10, b20, b01, b11, chi1, sig, R: 105.912713 
+ ######### correlation coefficient b02 - sig : -0.279635 
+######### b02 - sig plane at FIXED fnl, b10, b20, b01, b11, chi1, w10, R ######### 
+1-sigma error on b02, marg over sig at fixed fnl, b10, b20, b01, b11, chi1, w10, R: 74.268602 
+1-sigma error on sig, marg over b02 at fixed fnl, b10, b20, b01, b11, chi1, w10, R: 0.039086 
+ ######### correlation coefficient b02 - R : 0.913581 
+######### b02 - R plane at FIXED fnl, b10, b20, b01, b11, chi1, w10, sig ######### 
+1-sigma error on b02, marg over R at fixed fnl, b10, b20, b01, b11, chi1, w10, sig: 101.583888 
+1-sigma error on R, marg over b02 at fixed fnl, b10, b20, b01, b11, chi1, w10, sig: 0.066535 
+ ######### correlation coefficient chi1 - w10 : 0.565244 
+######### chi1 - w10 plane at FIXED fnl, b10, b20, b01, b11, b02, sig, R ######### 
+1-sigma error on chi1, marg over w10 at fixed fnl, b10, b20, b01, b11, b02, sig, R: 0.651075 
+1-sigma error on w10, marg over chi1 at fixed fnl, b10, b20, b01, b11, b02, sig, R: 107.097236 
+ ######### correlation coefficient chi1 - sig : 0.287367 
+######### chi1 - sig plane at FIXED fnl, b10, b20, b01, b11, b02, w10, R ######### 
+1-sigma error on chi1, marg over sig at fixed fnl, b10, b20, b01, b11, b02, w10, R: 1.256276 
+1-sigma error on sig, marg over chi1 at fixed fnl, b10, b20, b01, b11, b02, w10, R: 0.044297 
+ ######### correlation coefficient chi1 - R : -0.962659 
+######### chi1 - R plane at FIXED fnl, b10, b20, b01, b11, b02, w10, sig ######### 
+1-sigma error on chi1, marg over R at fixed fnl, b10, b20, b01, b11, b02, w10, sig: 1.971561 
+1-sigma error on R, marg over chi1 at fixed fnl, b10, b20, b01, b11, b02, w10, sig: 0.086519 
+ ######### correlation coefficient w10 - sig : 0.664611 
+######### w10 - sig plane at FIXED fnl, b10, b20, b01, b11, b02, chi1, R ######### 
+1-sigma error on w10, marg over sig at fixed fnl, b10, b20, b01, b11, b02, chi1, R: 137.215169 
+1-sigma error on sig, marg over w10 at fixed fnl, b10, b20, b01, b11, b02, chi1, R: 0.029413 
+ ######### correlation coefficient w10 - R : -0.556803 
+######### w10 - R plane at FIXED fnl, b10, b20, b01, b11, b02, chi1, sig ######### 
+1-sigma error on w10, marg over R at fixed fnl, b10, b20, b01, b11, b02, chi1, sig: 118.589055 
+1-sigma error on R, marg over w10 at fixed fnl, b10, b20, b01, b11, b02, chi1, sig: 0.031637 
+ ######### correlation coefficient sig - R : -0.403584 
+######### sig - R plane at FIXED fnl, b10, b20, b01, b11, b02, chi1, w10 ######### 
+1-sigma error on sig, marg over R at fixed fnl, b10, b20, b01, b11, b02, chi1, w10: 0.094263 
+1-sigma error on R, marg over sig at fixed fnl, b10, b20, b01, b11, b02, chi1, w10: 0.117316 

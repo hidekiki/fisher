@@ -6,23 +6,29 @@
 #  imports  #
 #############
 import numpy as np
+from numpy import linalg, pi, sin
+
 from scipy import interpolate
+
 import multiprocessing
-from extras import set_active, cartesian, interp_list, set_shift
-import matplotlib
-from matplotlib import pyplot as plt
-import vegas
 import datetime
 from tempfile import TemporaryFile
 import os.path
-from numpy import linalg, pi, sin
+
+#import matplotlib
+#from matplotlib import pyplot as plt
+
+import vegas
+
+from extras import set_active, cartesian, interp_list, set_shift
+
 
 E = np.exp(1.)
 
 # for integration loops and parallel
 qmin = 0.0001
 qmax = 10. #default
-ncores = multiprocessing.cpu_count()-1
+ncores = multiprocessing.cpu_count()
 n=1.; # default consider every n*kf for the bispectrum . for the power specutrm it computes every kf. 
 ni = 2; #number iterations
 ne = 3500; #number of evaluations
@@ -259,19 +265,16 @@ def Var2Factor(k1,k2,k3): #only the factor to be able to take the b1 derivativ i
 ##########################
 #  shapes and bispectra  #
 ##########################
-# shapes with ns dependance 
-def Fshape(k1,k2,k3):
-    if shapehere == "none":
-        return 0.
-    if shapehere == "orthogonal":
-        return  np.asarray(- T(k1) * T(k2) * T(k3)  * (18./5.) *  Azeta**2  * ( - (3./(k1**(4.-ns) * k2**(4.-ns))) - (3./(k1**(4.-ns)  * k3**(4.-ns))) - (3./(k2**(4.-ns)  * k3**(4.-ns))) - (2./(k1**(2.*(4.-ns)/3.)  * k2**(2.*(4.-ns)/3.) *  k3**(2.*(4.-ns)/3.))) + (3./(k1**((4.-ns)/3) *  k2**(2.*(4.-ns)/3.)  * k3**(4.-ns) ))  + (3./(k2**((4.-ns)/3.) *  k3**(2.*(4.-ns)/3.) * k1**(4.-ns))) + (3./(k3**((4.-ns)/3.) *  k1**(2.*(4.-ns)/3)  * k2**(4.-ns) ) ) + (3./(k3**((4.-ns)/3.)  * k2**(2.*(4.-ns)/3.) *  k1**(4.-ns)) )+ (3./(k2**((4.-ns)/3.)  * k1**(2*(4.-ns)/3.)  * k3**(4.-ns) )) + (3./(k1**((4.-ns)/3.)  * k3**(2.*(4.-ns)/3.)  * k2**(4.-ns))) ))
-    elif shapehere == "equilateral":
-        return  np.asarray(- T(k1) * T(k2) * T(k3)  * (18./5.) *  Azeta**2  * ( - (1./(k1**(4.-ns) * k2**(4.-ns))) - (1./(k1**(4.-ns)  * k3**(4.-ns))) - (1./(k2**(4.-ns)  * k3**(4.-ns))) - (2./(k1**(2.*(4.-ns)/3.)  * k2**(2.*(4.-ns)/3.) *  k3**(2.*(4.-ns)/3.))) + (1./(k1**((4.-ns)/3) *  k2**(2.*(4.-ns)/3.)  * k3**(4.-ns) ))  + (1./(k2**((4.-ns)/3.) *  k3**(2.*(4.-ns)/3.) * k1**(4.-ns))) + (1./(k3**((4.-ns)/3.) *  k1**(2.*(4.-ns)/3)  * k2**(4.-ns) ) ) + (1./(k3**((4.-ns)/3.)  * k2**(2.*(4.-ns)/3.) *  k1**(4.-ns)) )+ (1./(k2**((4.-ns)/3.)  * k1**(2*(4.-ns)/3.)  * k3**(4.-ns) )) + (1./(k1**((4.-ns)/3.)  * k3**(2.*(4.-ns)/3.)  * k2**(4.-ns))) ))
-    elif shapehere == "local":
-        return np.asarray( - T(k1) * T(k2) * T(k3)  * (6./5.) *  Azeta**2  * ( (1./(k1**(4.-ns) * k2**(4.-ns))) + (1./(k1**(4.-ns)  * k3**(4.-ns))) + (1./(k2**(4.-ns)  * k3**(4.-ns))) ))
-    else :
-        print "wrong shape name"
-        return 0.
+# shapes with ns dependance UNCOMMENT THE SHAPE YOU USE
+
+#def Fshape(k1,k2,k3): # orthogonal
+#    return  np.asarray(- T(k1) * T(k2) * T(k3)  * (18./5.) *  Azeta**2  * ( - (3./(k1**(4.-ns) * k2**(4.-ns))) - (3./(k1**(4.-ns)  * k3**(4.-ns))) - (3./(k2**(4.-ns)  * k3**(4.-ns))) - (2./(k1**(2.*(4.-ns)/3.)  * k2**(2.*(4.-ns)/3.) *  k3**(2.*(4.-ns)/3.))) + (3./(k1**((4.-ns)/3) *  k2**(2.*(4.-ns)/3.)  * k3**(4.-ns) ))  + (3./(k2**((4.-ns)/3.) *  k3**(2.*(4.-ns)/3.) * k1**(4.-ns))) + (3./(k3**((4.-ns)/3.) *  k1**(2.*(4.-ns)/3)  * k2**(4.-ns) ) ) + (3./(k3**((4.-ns)/3.)  * k2**(2.*(4.-ns)/3.) *  k1**(4.-ns)) )+ (3./(k2**((4.-ns)/3.)  * k1**(2*(4.-ns)/3.)  * k3**(4.-ns) )) + (3./(k1**((4.-ns)/3.)  * k3**(2.*(4.-ns)/3.)  * k2**(4.-ns))) ))
+#
+#def Fshape(k1,k2,k3): #"equilateral":
+#    return  np.asarray(- T(k1) * T(k2) * T(k3)  * (18./5.) *  Azeta**2  * ( - (1./(k1**(4.-ns) * k2**(4.-ns))) - (1./(k1**(4.-ns)  * k3**(4.-ns))) - (1./(k2**(4.-ns)  * k3**(4.-ns))) - (2./(k1**(2.*(4.-ns)/3.)  * k2**(2.*(4.-ns)/3.) *  k3**(2.*(4.-ns)/3.))) + (1./(k1**((4.-ns)/3) *  k2**(2.*(4.-ns)/3.)  * k3**(4.-ns) ))  + (1./(k2**((4.-ns)/3.) *  k3**(2.*(4.-ns)/3.) * k1**(4.-ns))) + (1./(k3**((4.-ns)/3.) *  k1**(2.*(4.-ns)/3)  * k2**(4.-ns) ) ) + (1./(k3**((4.-ns)/3.)  * k2**(2.*(4.-ns)/3.) *  k1**(4.-ns)) )+ (1./(k2**((4.-ns)/3.)  * k1**(2*(4.-ns)/3.)  * k3**(4.-ns) )) + (1./(k1**((4.-ns)/3.)  * k3**(2.*(4.-ns)/3.)  * k2**(4.-ns))) ))
+
+def Fshape(k1,k2,k3): #local":
+    return np.asarray( - T(k1) * T(k2) * T(k3)  * (6./5.) *  Azeta**2  * ( (1./(k1**(4.-ns) * k2**(4.-ns))) + (1./(k1**(4.-ns)  * k3**(4.-ns))) + (1./(k2**(4.-ns)  * k3**(4.-ns))) ))
 
 #########################
 # Fisher Power spectrum #
