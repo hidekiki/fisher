@@ -22,13 +22,15 @@ import vegas
 
 from extras import set_active, cartesian, interp_list, set_shift
 
+import psutil # to see how many cores are allocated
+
 
 E = np.exp(1.)
 
 # for integration loops and parallel
 qmin = 0.0001
 qmax = 10. #default
-ncores = multiprocessing.cpu_count()
+ncores =  len(psutil.Process().cpu_affinity()) #multiprocessing.cpu_count()
 n=1.; # default consider every n*kf for the bispectrum . for the power specutrm it computes every kf. 
 ni = 2; #number iterations
 ne = 3500; #number of evaluations
@@ -129,7 +131,7 @@ schi1 = 0.;
 
 #counts progress in dbfid
 stri = 0;
-chunksize = 100 # divide the triangle list in chunks of size "chunksize". carefull not to change the chunksize between runs!
+chunksize = 1000 # divide the triangle list in chunks of size "chunksize". carefull not to change the chunksize between runs!
 
 #sets dedicated names for the fidvalues
 def initialize(act,allfid,allpri,nn,kkhigh,bngg):
@@ -185,6 +187,7 @@ def model_output() :
     print "there are %i k's for the power specutrm" % len(pointlistP)
     print "there are %i triangles for the bispecutrm" % len(trianglelist)
     print "the chunksize for dbfid is %i" % chunksize
+    print "number of cpu used %i" % ncores
 
 
 #############################
@@ -270,11 +273,11 @@ def Var2Factor(k1,k2,k3): #only the factor to be able to take the b1 derivativ i
 #def Fshape(k1,k2,k3): # orthogonal
 #    return  np.asarray(- T(k1) * T(k2) * T(k3)  * (18./5.) *  Azeta**2  * ( - (3./(k1**(4.-ns) * k2**(4.-ns))) - (3./(k1**(4.-ns)  * k3**(4.-ns))) - (3./(k2**(4.-ns)  * k3**(4.-ns))) - (2./(k1**(2.*(4.-ns)/3.)  * k2**(2.*(4.-ns)/3.) *  k3**(2.*(4.-ns)/3.))) + (3./(k1**((4.-ns)/3) *  k2**(2.*(4.-ns)/3.)  * k3**(4.-ns) ))  + (3./(k2**((4.-ns)/3.) *  k3**(2.*(4.-ns)/3.) * k1**(4.-ns))) + (3./(k3**((4.-ns)/3.) *  k1**(2.*(4.-ns)/3)  * k2**(4.-ns) ) ) + (3./(k3**((4.-ns)/3.)  * k2**(2.*(4.-ns)/3.) *  k1**(4.-ns)) )+ (3./(k2**((4.-ns)/3.)  * k1**(2*(4.-ns)/3.)  * k3**(4.-ns) )) + (3./(k1**((4.-ns)/3.)  * k3**(2.*(4.-ns)/3.)  * k2**(4.-ns))) ))
 #
-#def Fshape(k1,k2,k3): #"equilateral":
-#    return  np.asarray(- T(k1) * T(k2) * T(k3)  * (18./5.) *  Azeta**2  * ( - (1./(k1**(4.-ns) * k2**(4.-ns))) - (1./(k1**(4.-ns)  * k3**(4.-ns))) - (1./(k2**(4.-ns)  * k3**(4.-ns))) - (2./(k1**(2.*(4.-ns)/3.)  * k2**(2.*(4.-ns)/3.) *  k3**(2.*(4.-ns)/3.))) + (1./(k1**((4.-ns)/3) *  k2**(2.*(4.-ns)/3.)  * k3**(4.-ns) ))  + (1./(k2**((4.-ns)/3.) *  k3**(2.*(4.-ns)/3.) * k1**(4.-ns))) + (1./(k3**((4.-ns)/3.) *  k1**(2.*(4.-ns)/3)  * k2**(4.-ns) ) ) + (1./(k3**((4.-ns)/3.)  * k2**(2.*(4.-ns)/3.) *  k1**(4.-ns)) )+ (1./(k2**((4.-ns)/3.)  * k1**(2*(4.-ns)/3.)  * k3**(4.-ns) )) + (1./(k1**((4.-ns)/3.)  * k3**(2.*(4.-ns)/3.)  * k2**(4.-ns))) ))
+def Fshape(k1,k2,k3): #"equilateral":
+    return  np.asarray(- T(k1) * T(k2) * T(k3)  * (18./5.) *  Azeta**2  * ( - (1./(k1**(4.-ns) * k2**(4.-ns))) - (1./(k1**(4.-ns)  * k3**(4.-ns))) - (1./(k2**(4.-ns)  * k3**(4.-ns))) - (2./(k1**(2.*(4.-ns)/3.)  * k2**(2.*(4.-ns)/3.) *  k3**(2.*(4.-ns)/3.))) + (1./(k1**((4.-ns)/3) *  k2**(2.*(4.-ns)/3.)  * k3**(4.-ns) ))  + (1./(k2**((4.-ns)/3.) *  k3**(2.*(4.-ns)/3.) * k1**(4.-ns))) + (1./(k3**((4.-ns)/3.) *  k1**(2.*(4.-ns)/3)  * k2**(4.-ns) ) ) + (1./(k3**((4.-ns)/3.)  * k2**(2.*(4.-ns)/3.) *  k1**(4.-ns)) )+ (1./(k2**((4.-ns)/3.)  * k1**(2*(4.-ns)/3.)  * k3**(4.-ns) )) + (1./(k1**((4.-ns)/3.)  * k3**(2.*(4.-ns)/3.)  * k2**(4.-ns))) ))
 
-def Fshape(k1,k2,k3): #local":
-    return np.asarray( - T(k1) * T(k2) * T(k3)  * (6./5.) *  Azeta**2  * ( (1./(k1**(4.-ns) * k2**(4.-ns))) + (1./(k1**(4.-ns)  * k3**(4.-ns))) + (1./(k2**(4.-ns)  * k3**(4.-ns))) ))
+#def Fshape(k1,k2,k3): #local":
+#    return np.asarray( - T(k1) * T(k2) * T(k3)  * (6./5.) *  Azeta**2  * ( (1./(k1**(4.-ns) * k2**(4.-ns))) + (1./(k1**(4.-ns)  * k3**(4.-ns))) + (1./(k2**(4.-ns)  * k3**(4.-ns))) ))
 
 #########################
 # Fisher Power spectrum #
@@ -323,7 +326,7 @@ def pk(k,(fnlfid ,b10fid, b20fid, b01fid, b11fid, b02fid, chi1fid, w10fid, sigfi
     def f(y):
         return P_integrand(k,y[0],y[1],[fnlfid ,b10fid, b20fid, b01fid, b11fid, b02fid, chi1fid, w10fid, sigfid, Rfid])
     integ = vegas.Integrator([[qmin, qmax], [-1.,1.]])
-    result = integ(f, nitn=ni, neval=2*ne)
+    result = integ(f, nitn=ni, neval=3*ne)
     #print result.summary()
     return result.mean
 
@@ -358,8 +361,8 @@ def dpkpar(k,par):
     def f(y):
         return  DP_integrand(k,y[0],y[1],[fnlfid ,b10fid, b20fid, b01fid, b11fid, b02fid, chi1fid, w10fid, sigfid, Rfid],par)
     integ = vegas.Integrator([[qmin, qmax], [-1, 1]])
-    result = integ(f, nitn=ni, neval = 2*ne) # slightly more evaluations and iterations for the derivative to be sure to have about few percent accuracy
-    print result.summary()
+    result = integ(f, nitn=ni, neval = 3*ne) # slightly more evaluations and iterations for the derivative to be sure to have about few percent accuracy
+    #print result.summary()
     return result.mean
 
 def dpk(k): # return an array of the derivatives of P wrt to each param for given k
@@ -452,7 +455,7 @@ def dbkpar(k,par):
         return  DB_integrand(k,y[0],y[1],[fnlfid ,b10fid, b20fid, b01fid, b11fid, b02fid, chi1fid, w10fid, sigfid, Rfid],par)
     integ = vegas.Integrator([[qmin, qmax], [-1, 1]])
     result = integ(f, nitn=ni, neval = ne) # 1 more than the rest
-    print result.summary()
+    #print result.summary()
     return result.mean
 
 
@@ -597,7 +600,7 @@ def dpkpar_sq(k,par):
         return  DP_sq_integrand(k,y[0],y[1],[fnlfid ,b10fid, b20fid, b01fid, b11fid, b02fid, chi1fid, w10fid, sigfid, Rfid],bng,par)
     integ = vegas.Integrator([[qmin, qmax], [-1, 1]])
     result = integ(f, nitn=ni, neval = 2*ne) # slightly more evaluations and iterations for the derivative to be sure to have about few percent accuracy
-    print result.summary()
+    #print result.summary()
     return result.mean
 
 def dpk_sq(k): # return an array of the derivatives of P wrt to each param for given k
@@ -739,11 +742,8 @@ def bkfid(k): # b(k) at fid values
         return B_integrand(k,y[0],y[1],(fnlfid ,b10fid, b20fid, b01fid, b11fid, b02fid, chi1fid, w10fid, sigfid, Rfid))
     integ = vegas.Integrator([[qmin, qmax], [-1.,1.]])
     result = integ(f, nitn=ni, neval=ne)
-    
-    
-    print result.summary()
-    
-    print datetime.datetime.now()
+    #print result.summary()
+    #print datetime.datetime.now()
     
     return result.mean
 
@@ -753,7 +753,7 @@ def bkshift(k): # b(k) at shifted values
     integ = vegas.Integrator([[qmin, qmax], [-1.,1.]])
     
     result = integ(f, nitn=ni, neval=ne)
-    print result.summary()
+    #print result.summary()
     return result.mean
 
 def compute_bfid(): # computes b(k) at fid values of parameters for each triangle of trianglelist and saves it

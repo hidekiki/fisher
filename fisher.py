@@ -30,10 +30,10 @@ import os.path
 
 import fishfun
 
-from extras import Survey
+#from extras import Survey
 
 # euclid = Survey(1.60354*10**10,0.000399415,0.001,0.16,1,1)
-euclidlike = Survey(1.60354*10**10,0.000399415,0,0.16,1.,1.)
+#euclidlike = Survey(1.60354*10**10,0.000399415,0,0.16,1.,1.)
 # old = Survey(10**10,0.005,0,0.17,1,1)
 
 
@@ -48,12 +48,12 @@ allpriors = [0.,0.,0.,0.,0.,0.,0.,0.,0.,0.] # priors
 #allfiducial = [0.,0.454,-0.361,1.87,1.94634,3.037,-2.024,-0.4821,5.76,0.8]# 10^12 msun constrained shift b20-b11
 #allfiducial = [0.,0.454,-0.361,1.87,1.155,3.037,-1.23266,-0.4821,5.76,0.8]# 10^12 msun constrained shift b20-chi1
 
-allfiducial = [0.,1.51,0.00871,9.38,16.62,74.17,-15.17,-13.09,5.76,1.6]# 10^13 msun fiducial values of parameters
+#allfiducial = [0.,1.51,0.00871,9.38,16.62,74.17,-15.17,-13.09,5.76,1.6]# 10^13 msun fiducial values of parameters
 #allfiducial = [0.,1.51,0.50871,9.38,15.30,74.17,-15.17,-13.09,5.76,1.6]# 10^13 constrained shift b20-b11
 #allfiducial = [0.,1.51,0.50871,9.38,16.62,74.17,-16.49,-13.09,5.76,1.6]# 10^13 constrained shift b20-chi1
 #allfiducial = [0.,1.51,0.00871,0.,0.,0.,0.,0.,5.76,1.6] # all zero except b01 b02
 
-#allfiducial = [0.,5.36,2.3,48.3,281.6,1864,-150.1,-403.8,5.76,3.6]#10^14 msun fiducial values of parameters
+allfiducial = [0.,5.36,2.3,48.3,281.6,1864,-150.1,-403.8,5.76,3.6]#10^14 msun fiducial values of parameters
 #allfiducial = [0.,5.36,2.8,48.3,193.984,1864,-150.1,-403.8,5.76,3.6]#10^14 msun constrained shift b20-b11
 #allfiducial = [0.,5.36,2.8,48.3,281.6,1864,-237.716,-403.8,5.76,3.6]#10^14 msun constrained shift b20-chi1
 
@@ -67,12 +67,12 @@ allfiducial = [0.,1.51,0.00871,9.38,16.62,74.17,-15.17,-13.09,5.76,1.6]# 10^13 m
 #bng = -0.908122 # bng for simple model 10^12 mass
 #bng = 0.910357 # bng for full model 10^12 mass
 #bng = 0.00445277 # bng for simple model 10^13 mass
-bng = 2.58659 # bng for full model 10^13 mass
+#bng = 2.58659 # bng for full model 10^13 mass
 #bng = 0.461619 # bng for simple model 10^14 mass
-#bng = 4.20369 # bng for full model 10^14 mass
+bng = 4.20369 # bng for full model 10^14 mass
 
 # for simple model
-models=[[["local",],["P","B","P+B"],[ 1.,1.,1.,1.,1.,1.,1.,1.,1.,1.],1.,0.16,bng]
+models=[[["equilateral",],["P","B","P+B"],[ 1.,1.,1.,1.,1.,1.,1.,1.,1.,1.],1.,0.16,bng]
         #,[["equilateral",],["P","B","P+B"],[ 1.,1., 1.,0.,0.,0.,0.,0., 1., 1.],1.,0.16,bng]
         ] #shape, data, parameters , n, kmax
 
