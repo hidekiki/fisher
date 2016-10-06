@@ -51,11 +51,11 @@ allpriors = [0.,0.,0.,0.,0.,0.,0.,0.,0.,0.] # priors
 #        ] #shape, data, parameters , n, kmax
 
 # all the models and combinations of data that we want to compute. for shape and data it's possible to specify more than 1 element : all combinations will be computed
-models=[[["local",],["B","P+B"],[ 1.,1., 1.,1.,1.,1.,1.,1., 1., 1.],1.,0.16],
+#models=[[["local",],["B","P+B"],[ 1.,1., 1.,1.,1.,1.,1.,1., 1., 1.],1.,0.16],
         #[["equilateral",],["P","B","P+B"],[ 1.,1., 1.,0.,0.,0.,0.,0., 1., 1.],1.,0.16]
-        ] #shape, data, parameters , n, kmax "P",
+#       ] #shape, data, parameters , n, kmax "P",
 
-#models=[[["orthogonal"],["P","B","P+B"],[ 1.,1., 1.,0.,0.,0.,0.,0., 1., 1.],1.,0.16,"simple"]]
+models=[[["equilateral",],["P","B","P+B"],[ 1.,1., 1.,1.,1.,1.,1.,1., 1., 1.],1.,0.16]]
 
 #########################
 #    Loop over models   #
@@ -133,6 +133,8 @@ for m in models :
 #            euclid.display()
 #fishfun.compute_dpfid()
 
+
+                
 
             if chosenshape == "local" :
             

@@ -1,0 +1,54 @@
+######### non marg errors ######### 
+1-sigma error on fnl, non marg : 106.022167 
+1-sigma error on b10, non marg : 0.002274 
+1-sigma error on b20, non marg : 0.092464 
+1-sigma error on sig, non marg : 0.056967 
+1-sigma error on R, non marg : 0.101342 
+######### marg errors ######### 
+1-sigma error on fnl, marg over all other parameters : 2001.783187 
+1-sigma error on b10, marg over all other parameters : 0.053490 
+1-sigma error on b20, marg over all other parameters : 0.592382 
+1-sigma error on sig, marg over all other parameters : 1.991762 
+1-sigma error on R, marg over all other parameters : 3.700833 
+1-sigma error on fnl, marg over all param at fixed R and sigma: 1154.351872.2
+1-sigma error on fnl, marg over all param at fixed b10, b20, R, sigma: 106.022167.2
+ ######### correlation coefficient fnl - b10 : 0.928494 
+######### fnl - b10 plane at FIXED b20, sig, R ######### 
+1-sigma error on fnl, marg over b10 at fixed b20, sig, R: 663.238591 
+1-sigma error on b10, marg over fnl at fixed b20, sig, R: 0.014226 
+ ######### correlation coefficient fnl - b20 : -0.125346 
+######### fnl - b20 plane at FIXED b10, sig, R ######### 
+1-sigma error on fnl, marg over b20 at fixed b10, sig, R: 539.757381 
+1-sigma error on b20, marg over fnl at fixed b10, sig, R: 0.470735 
+ ######### correlation coefficient fnl - sig : 0.280994 
+######### fnl - sig plane at FIXED b10, b20, R ######### 
+1-sigma error on fnl, marg over sig at fixed b10, b20, R: 169.578425 
+1-sigma error on sig, marg over fnl at fixed b10, b20, R: 0.091117 
+ ######### correlation coefficient fnl - R : -0.139180 
+######### fnl - R plane at FIXED b10, b20, sig ######### 
+1-sigma error on fnl, marg over R at fixed b10, b20, sig: 183.571001 
+1-sigma error on R, marg over fnl at fixed b10, b20, sig: 0.175468 
+ ######### correlation coefficient b10 - b20 : 0.197484 
+######### b10 - b20 plane at FIXED fnl, sig, R ######### 
+1-sigma error on b10, marg over b20 at fixed fnl, sig, R: 0.007524 
+1-sigma error on b20, marg over b10 at fixed fnl, sig, R: 0.305937 
+ ######### correlation coefficient b10 - sig : 0.235810 
+######### b10 - sig plane at FIXED fnl, b20, R ######### 
+1-sigma error on b10, marg over sig at fixed fnl, b20, R: 0.004557 
+1-sigma error on sig, marg over b10 at fixed fnl, b20, R: 0.114168 
+ ######### correlation coefficient b10 - R : -0.066644 
+######### b10 - R plane at FIXED fnl, b20, sig ######### 
+1-sigma error on b10, marg over R at fixed fnl, b20, sig: 0.005089 
+1-sigma error on R, marg over b10 at fixed fnl, b20, sig: 0.226780 
+ ######### correlation coefficient b20 - sig : 0.352316 
+######### b20 - sig plane at FIXED fnl, b10, R ######### 
+1-sigma error on b20, marg over sig at fixed fnl, b10, R: 0.129502 
+1-sigma error on sig, marg over b20 at fixed fnl, b10, R: 0.079786 
+ ######### correlation coefficient b20 - R : -0.299999 
+######### b20 - R plane at FIXED fnl, b10, sig ######### 
+1-sigma error on b20, marg over R at fixed fnl, b10, sig: 0.137874 
+1-sigma error on R, marg over b20 at fixed fnl, b10, sig: 0.151112 
+ ######### correlation coefficient sig - R : -0.983859 
+######### sig - R plane at FIXED fnl, b10, b20 ######### 
+1-sigma error on sig, marg over R at fixed fnl, b10, b20: 0.854235 
+1-sigma error on R, marg over sig at fixed fnl, b10, b20: 1.519642 

@@ -34,7 +34,7 @@ qmax = 10. #default
 ncores =  multiprocessing.cpu_count() # for local
 n=1.; # default consider every n*kf for the bispectrum . for the power specutrm it computes every kf. 
 ni = 2; #number iterations
-ne = 3500; #number of evaluations
+ne = 500; #number of evaluations #3500 normal
 
 #######################
 #  survey parameters  #
@@ -317,8 +317,9 @@ def Fshape(k1,k2,k3): #"equilateral":
 #    else :
 #        print "wrong model name"
 
-from fullmodel import P_integrand, DP_integrand, B_integrand, DB_integrand, DP_sq_integrand
-#from simplemodel import P_integrand, DP_integrand, B_integrand, DB_integrand, DP_sq_integrand
+#from fullmodel import P_integrand, DP_integrand, B_integrand, DB_integrand, DP_sq_integrand, a_integrand, b_integrand, c_integrand, a0_integrand, a1_integrand, a2_integrand, a3_integrand
+
+from simplemodel import P_integrand, DP_integrand, B_integrand, DB_integrand, DP_sq_integrand, a_integrand, b_integrand, c_integrand, a0_integrand, a1_integrand, a2_integrand, a3_integrand
 
 
 # integrates and returns power spectrum for a given k general values of parameters (for use in "shift")
@@ -732,140 +733,269 @@ def compute_fisher_squeezed(): # computes the fisher for shaperhere shape and da
     return Ftemp
 
 
+#################################
+##  Systematic shifts SMART WAY #
+#################################
 
-#######################
-#  Systematic shifts  #
-#######################
+# create a list with only the parameters which we can solve for
+def shift_list():
+    shiftpara = param
+    shiftpara.remove("fnl")
+    shiftpara.remove("R")
+    shiftpara.remove("fnl")
+    print shiftpara
+    return shiftpara
 
-def bkfid(k): # b(k) at fid values
+def integrate_coeff(name_of_function,index,k): # integrates the corresponding coefficient over q and x
     print datetime.datetime.now()
     def f(y):
-        return B_integrand(k,y[0],y[1],(fnlfid ,b10fid, b20fid, b01fid, b11fid, b02fid, chi1fid, w10fid, sigfid, Rfid))
+        return name_of_function(k,y[0],y[1],(fnlfid ,b10fid, b20fid, b01fid, b11fid, b02fid, chi1fid, w10fid, sigfid, Rfid),index)
     integ = vegas.Integrator([[qmin, qmax], [-1.,1.]])
     result = integ(f, nitn=ni, neval=ne)
-    #print result.summary()
-    #print datetime.datetime.now()
-    
+    print result.summary()
+    print datetime.datetime.now()
+
     return result.mean
 
-def bkshift(k): # b(k) at shifted values
-    def f(y):
-        return B_integrand(k,y[0],y[1],[fnlshift ,b10shift, b20shift, b01shift, b11shift, b02shift, chi1shift, w10shift, sigshift, Rshift])
-    integ = vegas.Integrator([[qmin, qmax], [-1.,1.]])
+def map_to_klist(): # for a given index = given parameter, maps the integrate function to the whole list of k
+    global dpfid
     
-    result = integ(f, nitn=ni, neval=ne)
-    #print result.summary()
-    return result.mean
-
-def compute_bfid(): # computes b(k) at fid values of parameters for each triangle of trianglelist and saves it
-    global bfid
-    
-    if os.path.isfile(modelhere+'/temp/bfid_'+shapehere+'.npz') and recbfid == "no":
-        data = np.load(modelhere+'/temp/bfid_'+shapehere+'.npz')
-        bfid = data['bfid'].tolist()
+    if os.path.isfile(modelhere+'/temp/dpfid_'+shapehere+'.npz') and recdpfid == "no":
+        data = np.load(modelhere+'/temp/dpfid_'+shapehere+'.npz')
+        dpfid = data['dpfid'].tolist()
         data.close()
-        print "bfid loaded"
-        #print bfid
+        print "dpfid loaded"
+    #print dpfid
     else :
         print datetime.datetime.now()
-        print "computing bfid"
+        print "computing dpfid (dP/dlambda): there are %i k's" % len(pointlistP)
+        
+        poolP = multiprocessing.Pool(processes=ncores); # start a multiprocess
+        dpfid = poolP.map(dpk, pointlistP)
+        poolP.close()
+        
+        #print dpfid
+        print datetime.datetime.now()
+        print "dpfid done"
+        np.savez(modelhere+'/temp/dpfid_'+shapehere+'.npz',dpfid=np.asarray(dpfid))
 
+def map_to_trilist(): # for a given index = given parameter, maps the integrate function to the whole list of triangles
+    global dbfid
+    
+    if os.path.isfile(modelhere+'/temp/dbfid_'+shapehere+'.npz') and recdbfid == "no":
+        data = np.load(modelhere+'/temp/dbfid_'+shapehere+'.npz')
+        dbfid = data['dbfid'].tolist()
+        data.close()
+        print datetime.datetime.now()
+        
+        if len(dbfid) == len(trianglelist):
+            print "dbfid loaded"
+        
+        #        print " len dbfid "
+        #        print len(dbfid)
+        
+        elif len(dbfid) > 0:
+            print "continuing dbfid computation"
+            tmin = len(dbfid) #index of first triangle to be computed
+            print dbfid
+            print "tmin = %f" % tmin
+            global stri
+            print "stri before = %i " % stri
+            stri = (float(len(param))/ncores)*len(dbfid);
+            print "stri = %i " % stri
+        else:
+            print "empty file, computing dbfid (dB/dlambda)"
+            dbfid = [] # accumulates the result
+            tmin = 0 #index of the first triangle that needs to be included
+    else:
+        print "no previous file, computing dbfid (dB/dlambda)"
+        dbfid = [] # accumulates the result
+        tmin = 0
+
+    if len(dbfid) != len(trianglelist):
         poolB = multiprocessing.Pool(processes=ncores); # start a multiprocess
-        bfid = poolB.map(bkfid, trianglelist)
+        
+        #    print "length of dbfid = %i " % len(dbfid)
+        #    print "len dbfid / chunksize = %f" % (len(dbfid)/chunksize)
+        
+        for i in range(int((len(dbfid)/chunksize)//1),1+int((len(trianglelist)/chunksize)//1)): #does not include the upper bound
+            
+            #        print "length of dbfid = %i " % len(dbfid)
+            #        print "length of dbfid/chunksize = %i " % (len(dbfid)/chunksize)
+            
+            print "chunk %i out of %i " % (i+1,1+int((len(trianglelist)/chunksize)//1))
+            
+            if (i+1)*chunksize > len(trianglelist): #check length of list
+                tmax = len(trianglelist)-1 #index of last triangle that has to be included
+            else :
+                tmax = (i+1)*chunksize-1 #index of last triangle in the list
+            
+            print "tmin = %i" % tmin
+            print "tmax = %i" % tmax
+            
+            listhere = trianglelist[tmin:tmax+1] # returns the (tmin+1)th element of the list up to tmax'th element, tmax excluded
+            
+            print "list here length %i" % len(listhere)
+            
+            dbfidhere = poolB.map(dbk,listhere)
+            
+            #        print "dbfid here"
+            #        print dbfidhere
+            
+            dbfid += dbfidhere
+            
+            #        print "dbfid after appending"
+            #        print dbfid
+            
+            np.savez(modelhere+'/temp/dbfid_'+shapehere+'.npz',dbfid=np.asarray(dbfid))
+            
+            tmin = (i+1)*chunksize # set the minimum for the next chunk
+            
+            print "chunk %i done" % (i+1)
+        
         poolB.close()
         
-        #print bfid
+        #print dbfid
         print datetime.datetime.now()
-        print "bfid done"
-        np.savez(modelhere+'/temp/bfid_'+shapehere+'.npz',bfid=np.asarray(bfid))
+        print "dbfid done"
 
-def compute_pshift():
-    global pshift
-    print datetime.datetime.now()
-    print "computing pshift"
-    
-    poolB = multiprocessing.Pool(processes=ncores); # start a multiprocess
-    pshift = poolB.map(pkshift, pointlistP)
-    poolB.close()
-    
-    #print pshift
-    print datetime.datetime.now()
-    print "pshift done"
 
-def compute_bshift():
-    global bshift
-    print datetime.datetime.now()
-    print "computing bshift"
-    
-    poolB = multiprocessing.Pool(processes=ncores); # start a multiprocess
-    bshift = poolB.map(bkshift, trianglelist)
-    poolB.close()
-    
-    #print bshift
-    print datetime.datetime.now()
-    print "bshift done"
+###########################################
+##  Systematic shifts OLD WAY, PRECISION? #
+###########################################
+#
+#def bkfid(k): # b(k) at fid values
+#    print datetime.datetime.now()
+#    def f(y):
+#        return B_integrand(k,y[0],y[1],(fnlfid ,b10fid, b20fid, b01fid, b11fid, b02fid, chi1fid, w10fid, sigfid, Rfid))
+#    integ = vegas.Integrator([[qmin, qmax], [-1.,1.]])
+#    result = integ(f, nitn=ni, neval=ne)
+#    #print result.summary()
+#    #print datetime.datetime.now()
+#    
+#    return result.mean
+#
+#def bkshift(k): # b(k) at shifted values
+#    def f(y):
+#        return B_integrand(k,y[0],y[1],[fnlshift ,b10shift, b20shift, b01shift, b11shift, b02shift, chi1shift, w10shift, sigshift, Rshift])
+#    integ = vegas.Integrator([[qmin, qmax], [-1.,1.]])
+#    
+#    result = integ(f, nitn=ni, neval=ne)
+#    #print result.summary()
+#    return result.mean
+#
+#def compute_bfid(): # computes b(k) at fid values of parameters for each triangle of trianglelist and saves it
+#    global bfid
+#    
+#    if os.path.isfile(modelhere+'/temp/bfid_'+shapehere+'.npz') and recbfid == "no":
+#        data = np.load(modelhere+'/temp/bfid_'+shapehere+'.npz')
+#        bfid = data['bfid'].tolist()
+#        data.close()
+#        print "bfid loaded"
+#        #print bfid
+#    else :
+#        print datetime.datetime.now()
+#        print "computing bfid"
+#
+#        poolB = multiprocessing.Pool(processes=ncores); # start a multiprocess
+#        bfid = poolB.map(bkfid, trianglelist)
+#        poolB.close()
+#        
+#        #print bfid
+#        print datetime.datetime.now()
+#        print "bfid done"
+#        np.savez(modelhere+'/temp/bfid_'+shapehere+'.npz',bfid=np.asarray(bfid))
+#
+#def compute_pshift():
+#    global pshift
+#    print datetime.datetime.now()
+#    print "computing pshift"
+#    
+#    poolB = multiprocessing.Pool(processes=ncores); # start a multiprocess
+#    pshift = poolB.map(pkshift, pointlistP)
+#    poolB.close()
+#    
+#    #print pshift
+#    print datetime.datetime.now()
+#    print "pshift done"
+#
+#def compute_bshift():
+#    global bshift
+#    print datetime.datetime.now()
+#    print "computing bshift"
+#    
+#    poolB = multiprocessing.Pool(processes=ncores); # start a multiprocess
+#    bshift = poolB.map(bkshift, trianglelist)
+#    poolB.close()
+#    
+#    #print bshift
+#    print datetime.datetime.now()
+#    print "bshift done"
+#
+#def fnlfactor_p(shiftedparam, value) : #computes the shift of fnl when shiftedparam is shifted to value
+#    if os.path.isfile(modelhere+'/temp/fnlp_'+shapehere+'_'+shiftedparam+'.npz') and recfnlp == "no":
+#        data = np.load(modelhere+'/temp/fnlp_'+shapehere+'_'+shiftedparam+'.npz')
+#        fnltemp = data['fnlp'].tolist()
+#        data.close()
+#        print "fnlp loaded"
+#    #print fnlp
+#    else :
+#        set_shift(shiftedparam, value) # sets all _shift to fiducial value except shiftedparam which is set to value. sets "currentparam" to shiftedparam
+#        compute_pshift()
+#        compute_pfid()
+#        compute_dpfid()
+#
+#        fnltemp = 0;
+#        for t in range(len(pointlistP)):
+#            fnltemp += (pshift[t]-pfid[t]) * dpfid[t][allparam.index(shiftedparam)] / var_p(pointlistP[t])
+#    
+#        np.savez(modelhere+'/temp/fnlp_'+shapehere+'_'+shiftedparam+'.npz',fnlp=np.asarray(fnltemp))
+#    return fnltemp
+#
+#def fnlfactor_b(shiftedparam, value) : #computes the shift of fnl when shiftedparam is shifted to value
+#    if os.path.isfile(modelhere+'/temp/fnlb_'+shapehere+'_'+shiftedparam+'.npz') and recfnlb == "no":
+#        data = np.load(modelhere+'/temp/fnlb_'+shapehere+'_'+shiftedparam+'.npz')
+#        fnltemp = data['fnlb'].tolist()
+#        data.close()
+#        print "fnlb loaded"
+#        #print fnlb
+#    else :
+#        set_shift(shiftedparam, value) # sets all _shift to fiducial value except shiftedparam which is set to value. sets "currentparam" to shiftedparam
+#        compute_bshift()
+#        compute_bfid()
+#        compute_pfid()
+#        compute_dbfid()
+#    
+#        fnltemp = 0;
+#        for t in range(len(trianglelist)):
+#            fnltemp += (bshift[t]-bfid[t]) * dbfid[t][allparam.index(shiftedparam)] /  Var2Factor(trianglelist[t][0],trianglelist[t][1],trianglelist[t][2])
+#        
+#        np.savez(modelhere+'/temp/fnlb_'+shapehere+'_'+shiftedparam+'.npz',fnlb=np.asarray(fnltemp))
+#    return fnltemp
+#
+#def compute_fnlshift(shiftedparam, value) : # shift in fnl
+#    fnltemp = 0;
+#    
+#    if datahere == "P":
+#        fnltemp = fnlfactor_p(shiftedparam, value)
+#    if datahere == "B":
+#        fnltemp = fnlfactor_b(shiftedparam, value)
+#    if datahere == "P+B":
+#        fnltemp = fnlfactor_p(shiftedparam, value) + fnlfactor_b(shiftedparam, value)
+#    
+#    fnltemp *= linalg.inv(compute_fisher())[allparam.index(shiftedparam),allparam.index("fnl")]
+#
+#    return fnltemp
+#
+## returns a list of shifted fnl values (without the F inverse factor) corresponding to parameter values of interp_list( param )
+#def compute_fnlshift_list(shiftedparam) :
+#
+#    fnllist = []
+#
+#    for shiftvale in interp_list(shiftedparam):
+#        fnllist.append(compute_fnlshift(shiftedparam, shiftvale))
+#    
+#    return fnllist
+#
 
-def fnlfactor_p(shiftedparam, value) : #computes the shift of fnl when shiftedparam is shifted to value
-    if os.path.isfile(modelhere+'/temp/fnlp_'+shapehere+'_'+shiftedparam+'.npz') and recfnlp == "no":
-        data = np.load(modelhere+'/temp/fnlp_'+shapehere+'_'+shiftedparam+'.npz')
-        fnltemp = data['fnlp'].tolist()
-        data.close()
-        print "fnlp loaded"
-    #print fnlp
-    else :
-        set_shift(shiftedparam, value) # sets all _shift to fiducial value except shiftedparam which is set to value. sets "currentparam" to shiftedparam
-        compute_pshift()
-        compute_pfid()
-        compute_dpfid()
 
-        fnltemp = 0;
-        for t in range(len(pointlistP)):
-            fnltemp += (pshift[t]-pfid[t]) * dpfid[t][allparam.index(shiftedparam)] / var_p(pointlistP[t])
-    
-        np.savez(modelhere+'/temp/fnlp_'+shapehere+'_'+shiftedparam+'.npz',fnlp=np.asarray(fnltemp))
-    return fnltemp
-
-def fnlfactor_b(shiftedparam, value) : #computes the shift of fnl when shiftedparam is shifted to value
-    if os.path.isfile(modelhere+'/temp/fnlb_'+shapehere+'_'+shiftedparam+'.npz') and recfnlb == "no":
-        data = np.load(modelhere+'/temp/fnlb_'+shapehere+'_'+shiftedparam+'.npz')
-        fnltemp = data['fnlb'].tolist()
-        data.close()
-        print "fnlb loaded"
-        #print fnlb
-    else :
-        set_shift(shiftedparam, value) # sets all _shift to fiducial value except shiftedparam which is set to value. sets "currentparam" to shiftedparam
-        compute_bshift()
-        compute_bfid()
-        compute_pfid()
-        compute_dbfid()
-    
-        fnltemp = 0;
-        for t in range(len(trianglelist)):
-            fnltemp += (bshift[t]-bfid[t]) * dbfid[t][allparam.index(shiftedparam)] /  Var2Factor(trianglelist[t][0],trianglelist[t][1],trianglelist[t][2])
-        
-        np.savez(modelhere+'/temp/fnlb_'+shapehere+'_'+shiftedparam+'.npz',fnlb=np.asarray(fnltemp))
-    return fnltemp
-
-def compute_fnlshift(shiftedparam, value) : # shift in fnl
-    fnltemp = 0;
-    
-    if datahere == "P":
-        fnltemp = fnlfactor_p(shiftedparam, value)
-    if datahere == "B":
-        fnltemp = fnlfactor_b(shiftedparam, value)
-    if datahere == "P+B":
-        fnltemp = fnlfactor_p(shiftedparam, value) + fnlfactor_b(shiftedparam, value)
-    
-    fnltemp *= linalg.inv(compute_fisher())[allparam.index(shiftedparam),allparam.index("fnl")]
-
-    return fnltemp
-
-# returns a list of shifted fnl values (without the F inverse factor) corresponding to parameter values of interp_list( param )
-def compute_fnlshift_list(shiftedparam) :
-
-    fnllist = []
-
-    for shiftvale in interp_list(shiftedparam):
-        fnllist.append(compute_fnlshift(shiftedparam, shiftvale))
-    
-    return fnllist
