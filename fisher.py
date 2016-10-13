@@ -139,6 +139,8 @@ for m in models :
         print("\n")
         print("################  "+fishfun.shapehere+"  ################ \n") #here we use the print to be sure it has been correctly set
         
+        fsyst = open(modelname+'/syst_'+chosenshape+'.dat', 'w+') # opens a file where we print ouput of systematic shifts for all data
+        
         for chosendata in data :
             
             fishfun.datahere = chosendata # setting the data used  in the other file
@@ -147,7 +149,7 @@ for m in models :
             
             print "###### data used : "+fishfun.datahere+" ###### \n"
             
-            F = fishfun.compute_fisher();
+            F = fishfun.fisher();
             Finv = linalg.inv(F); #inverse
             
             # eigen vectors and values of the inverse
@@ -387,6 +389,11 @@ for m in models :
 #                    pp.close() #closes pdf doc
 #                    plt.close(fig)
 
+###########################################
+# squeezed power spectrum and bispectrum  #
+###########################################
+
+
             if chosenshape == "local" :
                 
                 fsq = open(modelname+'/'+chosendata+'_'+chosenshape+'_squeezed.dat', 'w+') # opens a file where we print all output
@@ -394,7 +401,7 @@ for m in models :
                 print "\n"
                 print "###### data used : "+fishfun.datahere+" SQUEEZED ###### \n"
             
-                Fsq = fishfun.compute_fisher_squeezed();
+                Fsq = fishfun.fisher_squeezed();
                 Fsqinv = linalg.inv(Fsq); #inverse
                 
                 ######################################
@@ -419,10 +426,15 @@ for m in models :
                     print "1-sigma error on %s, marg over all other parameters : %f" % (param[i],1.*np.sqrt(Fsqinv[i,i]))
                     fsq.write("1-sigma error on %s, marg over all other parameters : %f \n" % (param[i],1.*np.sqrt(Fsqinv[i,i])))
                     #for 1 parameter of interest, the factor is 1 for 1 sigma, 2 for 2 sigma etc...
+                fsq.close()
+            print("\n")
     
-        ########################################
-        # for systematic shift in parameters   #
-        ########################################
+########################################
+# for systematic shift in parameters   #
+########################################
+
+            fishfun.shift(fsyst)
+        
 #            print "\n"
 #            print "############# one sigma systematic shift ###############"
 #            f.write("############# one sigma systematic shift ###############\n")
@@ -489,10 +501,10 @@ for m in models :
 #            #            f.write("ratio syst fnl %s error / stat fnl error : %f" % (chosenshape, ratio))
 #
 #                print("\n")
-                fsq.close()
-            print("\n")
+
             f.close()
-            
         print("\n")
+        fsyst.close()
+    print("\n")
 print datetime.datetime.now()
 print("############ DONE ############ \n")
