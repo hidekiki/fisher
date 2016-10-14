@@ -48,12 +48,12 @@ allpriors = [0.,0.,0.,0.,0.,0.,0.,0.,0.,0.] # priors
 #allfiducial = [0.,0.454,-0.361,1.87,1.94634,3.037,-2.024,-0.4821,5.76,0.8]# 10^12 msun constrained shift b20-b11
 #allfiducial = [0.,0.454,-0.361,1.87,1.155,3.037,-1.23266,-0.4821,5.76,0.8]# 10^12 msun constrained shift b20-chi1
 
-#allfiducial = [0.,1.51,0.00871,9.38,16.62,74.17,-15.17,-13.09,5.76,1.6]# 10^13 msun fiducial values of parameters
+allfiducial = [0.,1.51,0.00871,9.38,16.62,74.17,-15.17,-13.09,5.76,1.6]# 10^13 msun fiducial values of parameters
 #allfiducial = [0.,1.51,0.50871,9.38,15.30,74.17,-15.17,-13.09,5.76,1.6]# 10^13 constrained shift b20-b11
 #allfiducial = [0.,1.51,0.50871,9.38,16.62,74.17,-16.49,-13.09,5.76,1.6]# 10^13 constrained shift b20-chi1
 #allfiducial = [0.,1.51,0.00871,0.,0.,0.,0.,0.,5.76,1.6] # all zero except b01 b02
 
-allfiducial = [0.,5.36,2.3,48.3,281.6,1864,-150.1,-403.8,5.76,3.6]#10^14 msun fiducial values of parameters
+#allfiducial = [0.,5.36,2.3,48.3,281.6,1864,-150.1,-403.8,5.76,3.6]#10^14 msun fiducial values of parameters
 #allfiducial = [0.,5.36,2.8,48.3,193.984,1864,-150.1,-403.8,5.76,3.6]#10^14 msun constrained shift b20-b11
 #allfiducial = [0.,5.36,2.8,48.3,281.6,1864,-237.716,-403.8,5.76,3.6]#10^14 msun constrained shift b20-chi1
 
@@ -67,12 +67,12 @@ allfiducial = [0.,5.36,2.3,48.3,281.6,1864,-150.1,-403.8,5.76,3.6]#10^14 msun fi
 #bng = -0.908122 # bng for simple model 10^12 mass
 #bng = 0.910357 # bng for full model 10^12 mass
 #bng = 0.00445277 # bng for simple model 10^13 mass
-#bng = 2.58659 # bng for full model 10^13 mass
+bng = 2.58659 # bng for full model 10^13 mass
 #bng = 0.461619 # bng for simple model 10^14 mass
-bng = 4.20369 # bng for full model 10^14 mass
+#bng = 4.20369 # bng for full model 10^14 mass
 
 # for simple model
-models=[[["equilateral",],["P","B","P+B"],[ 1.,1.,1.,1.,1.,1.,1.,1.,1.,1.],1.,0.16,bng]
+models=[[["equilateral",],["P","B","P+B"],[ 1.,1.,1.,0.,0.,0.,0.,0.,1.,1.],1.,0.16,bng]
         #,[["equilateral",],["P","B","P+B"],[ 1.,1., 1.,0.,0.,0.,0.,0., 1., 1.],1.,0.16,bng]
         ] #shape, data, parameters , n, kmax
 
@@ -139,6 +139,8 @@ for m in models :
         print("\n")
         print("################  "+fishfun.shapehere+"  ################ \n") #here we use the print to be sure it has been correctly set
         
+        fsyst = open(modelname+'/syst_'+chosenshape+'.dat', 'w+') # opens a file where we print ouput of systematic shifts for all data
+        
         for chosendata in data :
             
             fishfun.datahere = chosendata # setting the data used  in the other file
@@ -147,7 +149,7 @@ for m in models :
             
             print "###### data used : "+fishfun.datahere+" ###### \n"
             
-            F = fishfun.compute_fisher();
+            F = fishfun.fisher();
             Finv = linalg.inv(F); #inverse
             
             # eigen vectors and values of the inverse
@@ -387,6 +389,11 @@ for m in models :
 #                    pp.close() #closes pdf doc
 #                    plt.close(fig)
 
+###########################################
+# squeezed power spectrum and bispectrum  #
+###########################################
+
+
             if chosenshape == "local" :
                 
                 fsq = open(modelname+'/'+chosendata+'_'+chosenshape+'_squeezed.dat', 'w+') # opens a file where we print all output
@@ -394,7 +401,7 @@ for m in models :
                 print "\n"
                 print "###### data used : "+fishfun.datahere+" SQUEEZED ###### \n"
             
-                Fsq = fishfun.compute_fisher_squeezed();
+                Fsq = fishfun.fisher_squeezed();
                 Fsqinv = linalg.inv(Fsq); #inverse
                 
                 ######################################
@@ -419,10 +426,15 @@ for m in models :
                     print "1-sigma error on %s, marg over all other parameters : %f" % (param[i],1.*np.sqrt(Fsqinv[i,i]))
                     fsq.write("1-sigma error on %s, marg over all other parameters : %f \n" % (param[i],1.*np.sqrt(Fsqinv[i,i])))
                     #for 1 parameter of interest, the factor is 1 for 1 sigma, 2 for 2 sigma etc...
+                fsq.close()
+            print("\n")
     
-        ########################################
-        # for systematic shift in parameters   #
-        ########################################
+########################################
+# for systematic shift in parameters   #
+########################################
+
+            fishfun.shift(fsyst)
+        
 #            print "\n"
 #            print "############# one sigma systematic shift ###############"
 #            f.write("############# one sigma systematic shift ###############\n")
@@ -489,10 +501,10 @@ for m in models :
 #            #            f.write("ratio syst fnl %s error / stat fnl error : %f" % (chosenshape, ratio))
 #
 #                print("\n")
-                fsq.close()
-            print("\n")
+
             f.close()
-            
         print("\n")
+        fsyst.close()
+    print("\n")
 print datetime.datetime.now()
 print("############ DONE ############ \n")
