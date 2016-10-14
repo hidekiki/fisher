@@ -750,12 +750,12 @@ def compute_shift_list():
     #print "shift_list"
     #print shift_list
 
-def integrate_coeff(name_of_function,index,k): # integrates the corresponding coefficient over q and x for given index (param) in shift list
+def integrate_coeff(name_of_function,index,k,nev): # integrates the corresponding coefficient over q and x for given index (param) in shift list
     print datetime.datetime.now()
     def f(y):
         return name_of_function(k,y[0],y[1],(fnlfid ,b10fid, b20fid, b01fid, b11fid, b02fid, chi1fid, w10fid, sigfid, Rfid),index)
     integ = vegas.Integrator([[qmin, qmax], [-1.,1.]])
-    result = integ(f, nitn=ni, neval=ne_shifts)
+    result = integ(f, nitn=ni, neval=nev)
     print result.summary()
     #print datetime.datetime.now()
 
@@ -765,9 +765,11 @@ def integrate_coeff(name_of_function,index,k): # integrates the corresponding co
 def coeff_array(name_of_function,k): # return an array of the value of the coeff for all parameters in shift_list for a given k
     if type(k) == type(float()):
         print("k = %.5f" % k)
+        nev = 4*ne_shifts # more evaluations for the power spectrum, only few k values
     else :
         print("triangle : (%.3f, %.3f %.3f)" % (k[0],k[1],k[2]))
-    return [ integrate_coeff(name_of_function,ind,k) for ind in range(len(shift_list)) ]
+        nev = ne_shifts # ne_shifts for the bispectrum, 24k triangles
+    return [ integrate_coeff(name_of_function,ind,k,nev) for ind in range(len(shift_list)) ]
 
 def make_mappable(name_of_function) : # makes a function of a single variable k for intergation in parallel
     def func_map(k):
