@@ -268,7 +268,7 @@ def compute_list():
 # variance and pt #
 ###################
 # variance of reduced bispectrum function in redshift space// here
-def Var2Factor(k1,k2,k3): #only the factor to be able to take the b1 derivativ in the full fisher case
+def var_b(k1,k2,k3): #only the factor to be able to take the b1 derivativ in the full fisher case
     if k1 != k2 != k3: trianglevar = 1.;
     elif k1 == k2 != k3 or k1 == k3 != k2 or k2 == k3 != k1 : trianglevar = 2.;
     else : trianglevar = 6. ;
@@ -577,7 +577,7 @@ def F_BB() : #computes the fisher with bispectrum data
         for t in range(len(trianglelist)): # build fisher matrix from derivatives easier sequentially here
             for j in range(len(param)):
                 for i in range(len(param)):
-                    Ftemp[i,j] += (dbfid[t][i] * dbfid[t][j]) / Var2Factor(trianglelist[t][0],trianglelist[t][1],trianglelist[t][2])
+                    Ftemp[i,j] += (dbfid[t][i] * dbfid[t][j]) / var_b(trianglelist[t][0],trianglelist[t][1],trianglelist[t][2])
         
         print datetime.datetime.now()
         print "F_B done"
@@ -714,7 +714,7 @@ def F_BB_squeezed() : #computes the fisher with bispectrum data
         for t in indices_squeezed.astype(int): # build fisher matrix summing only squeezd triangles
             for j in range(len(param)):
                 for i in range(len(param)):
-                    Ftemp[i,j] += (dbfid[t][i] * dbfid[t][j]) / Var2Factor(trianglelist[t][0],trianglelist[t][1],trianglelist[t][2])
+                    Ftemp[i,j] += (dbfid[t][i] * dbfid[t][j]) / var_b(trianglelist[t][0],trianglelist[t][1],trianglelist[t][2])
         
         print datetime.datetime.now()
         print "F_B squeezed done"
@@ -850,10 +850,10 @@ def coefficients_bis_par(par,a0,a1,a2,a3): # computes the coefficients of the qu
     #print "length dbfid %i" % len(dbfid)
     
     for i in range(len(trianglelist)):
-        A0 += a0[i][shift_list.index(par)]*dbfid[i][param.index(par)]/Var2Factor(trianglelist[i][0],trianglelist[i][1],trianglelist[i][2])
-        A1 += a1[i][shift_list.index(par)]*dbfid[i][param.index(par)]/Var2Factor(trianglelist[i][0],trianglelist[i][1],trianglelist[i][2])
-        A2 += a2[i][shift_list.index(par)]*dbfid[i][param.index(par)]/Var2Factor(trianglelist[i][0],trianglelist[i][1],trianglelist[i][2])
-        A3 += a3[i][shift_list.index(par)]*dbfid[i][param.index(par)]/Var2Factor(trianglelist[i][0],trianglelist[i][1],trianglelist[i][2])
+        A0 += a0[i][shift_list.index(par)]*dbfid[i][param.index(par)]/var_b(trianglelist[i][0],trianglelist[i][1],trianglelist[i][2])
+        A1 += a1[i][shift_list.index(par)]*dbfid[i][param.index(par)]/var_b(trianglelist[i][0],trianglelist[i][1],trianglelist[i][2])
+        A2 += a2[i][shift_list.index(par)]*dbfid[i][param.index(par)]/var_b(trianglelist[i][0],trianglelist[i][1],trianglelist[i][2])
+        A3 += a3[i][shift_list.index(par)]*dbfid[i][param.index(par)]/var_b(trianglelist[i][0],trianglelist[i][1],trianglelist[i][2])
     
 #print [A0,A1,A2,A3]
 
