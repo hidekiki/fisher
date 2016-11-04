@@ -10,7 +10,7 @@ from numpy import linalg, pi, sin
 
 from scipy import interpolate
 
-import multiprocessing
+#import multiprocessing
 import multiprocess # BETTER THAN MULTIPROCESSING
 
 import datetime
@@ -33,11 +33,10 @@ E = np.exp(1.)
 qmin = 0.0001
 qmax = 10. #default
 #ncores =  len(psutil.Process().cpu_affinity()) # for cluster
-ncores =  multiprocessing.cpu_count() # for local
+ncores =  multiprocess.cpu_count() # for local
 n=1.; # default consider every n*kf for the bispectrum . for the power specutrm it computes every kf. 
 ni = 2; #number iterations
-ne = 3500; #number of evaluations #3500 normal
-ne_shifts = 1000
+ne = 5000; #number of evaluations #3500 normal, 5000 for high prec
 
 #######################
 #  survey parameters  #
@@ -108,6 +107,9 @@ Rfid = 0.
 sigfid = 0.
 chi1fid = 0.
 bng = 0.
+sigma0 = 0.
+sigma1 = 0.
+sigma2 = 0. # these are the sigma 0, 1, 2...
 
 # for the defintion for syst shifts fucntions, set by "set_seshift" in extras.py
 fnlshift = 0. # only the active ones will be set to their values.
@@ -138,7 +140,7 @@ stri = 0;
 chunksize = 1000 # divide the triangle list in chunks of size "chunksize". carefull not to change the chunksize between runs!
 
 #sets dedicated names for the fidvalues
-def initialize(act,allfid,allpri,nn,kkhigh,bngg):
+def initialize(act,allfid,allpri,nn,kkhigh,mmoments):
     global qmax
     global khigh
     global n
@@ -153,6 +155,9 @@ def initialize(act,allfid,allpri,nn,kkhigh,bngg):
     global sigfid
     global chi1fid
     global bng
+    global sigma0
+    global sigma1
+    global sigma2
     global param
     global priors
     global fiducial
@@ -176,7 +181,7 @@ def initialize(act,allfid,allpri,nn,kkhigh,bngg):
     fiducial = set_active(act,allfid)
     qmax = 5./Rfid
     khigh = kkhigh
-    bng = bngg
+    (bng,sigma0,sigma1,sigma2) = mmoments
     n = nn
     compute_list()
 
@@ -263,7 +268,7 @@ def compute_list():
 # variance and pt #
 ###################
 # variance of reduced bispectrum function in redshift space// here
-def Var2Factor(k1,k2,k3): #only the factor to be able to take the b1 derivativ in the full fisher case
+def var_b(k1,k2,k3): #only the factor to be able to take the b1 derivativ in the full fisher case
     if k1 != k2 != k3: trianglevar = 1.;
     elif k1 == k2 != k3 or k1 == k3 != k2 or k2 == k3 != k1 : trianglevar = 2.;
     else : trianglevar = 6. ;
@@ -320,9 +325,9 @@ def Fshape(k1,k2,k3): #"equilateral":
 #    else :
 #        print "wrong model name"
 
-#from fullmodel import P_integrand, DP_integrand, B_integrand, DB_integrand, DP_sq_integrand, a_integrand, b_integrand, c_integrand, a0_integrand, a1_integrand, a2_integrand, a3_integrand
+from fullmodel import P_integrand, DP_integrand, B_integrand, DB_integrand, DP_sq_integrand, a_integrand, b_integrand, c_integrand, a0_integrand, a1_integrand, a2_integrand, a3_integrand, double_shift_abc, double_shift_a0123
 
-from simplemodel import P_integrand, DP_integrand, B_integrand, DB_integrand, DP_sq_integrand, a_integrand, b_integrand, c_integrand, a0_integrand, a1_integrand, a2_integrand, a3_integrand
+#from simplemodel import P_integrand, DP_integrand, B_integrand, DB_integrand, DP_sq_integrand, a_integrand, b_integrand, c_integrand, a0_integrand, a1_integrand, a2_integrand, a3_integrand
 
 
 # integrates and returns power spectrum for a given k general values of parameters (for use in "shift")
@@ -331,7 +336,7 @@ def pk(k,(fnlfid ,b10fid, b20fid, b01fid, b11fid, b02fid, chi1fid, w10fid, sigfi
     def f(y):
         return P_integrand(k,y[0],y[1],[fnlfid ,b10fid, b20fid, b01fid, b11fid, b02fid, chi1fid, w10fid, sigfid, Rfid])
     integ = vegas.Integrator([[qmin, qmax], [-1.,1.]])
-    result = integ(f, nitn=ni, neval=3*ne)
+    result = integ(f, nitn=ni, neval=4*ne)
     #print result.summary()
     return result.mean
 
@@ -366,7 +371,7 @@ def dpkpar(k,par):
     def f(y):
         return  DP_integrand(k,y[0],y[1],[fnlfid ,b10fid, b20fid, b01fid, b11fid, b02fid, chi1fid, w10fid, sigfid, Rfid],par)
     integ = vegas.Integrator([[qmin, qmax], [-1, 1]])
-    result = integ(f, nitn=ni, neval = 3*ne) # slightly more evaluations and iterations for the derivative to be sure to have about few percent accuracy
+    result = integ(f, nitn=ni, neval = 4*ne) # slightly more evaluations and iterations for the derivative to be sure to have about few percent accuracy
     #print result.summary()
     return result.mean
 
@@ -572,7 +577,7 @@ def F_BB() : #computes the fisher with bispectrum data
         for t in range(len(trianglelist)): # build fisher matrix from derivatives easier sequentially here
             for j in range(len(param)):
                 for i in range(len(param)):
-                    Ftemp[i,j] += (dbfid[t][i] * dbfid[t][j]) / Var2Factor(trianglelist[t][0],trianglelist[t][1],trianglelist[t][2])
+                    Ftemp[i,j] += (dbfid[t][i] * dbfid[t][j]) / var_b(trianglelist[t][0],trianglelist[t][1],trianglelist[t][2])
         
         print datetime.datetime.now()
         print "F_B done"
@@ -604,7 +609,7 @@ def dpkpar_sq(k,par):
     def f(y):
         return  DP_sq_integrand(k,y[0],y[1],[fnlfid ,b10fid, b20fid, b01fid, b11fid, b02fid, chi1fid, w10fid, sigfid, Rfid],bng,par)
     integ = vegas.Integrator([[qmin, qmax], [-1, 1]])
-    result = integ(f, nitn=ni, neval = 2*ne) # slightly more evaluations and iterations for the derivative to be sure to have about few percent accuracy
+    result = integ(f, nitn=ni, neval = 4*ne) # slightly more evaluations and iterations for the derivative to be sure to have about few percent accuracy
     #print result.summary()
     return result.mean
 
@@ -709,7 +714,7 @@ def F_BB_squeezed() : #computes the fisher with bispectrum data
         for t in indices_squeezed.astype(int): # build fisher matrix summing only squeezd triangles
             for j in range(len(param)):
                 for i in range(len(param)):
-                    Ftemp[i,j] += (dbfid[t][i] * dbfid[t][j]) / Var2Factor(trianglelist[t][0],trianglelist[t][1],trianglelist[t][2])
+                    Ftemp[i,j] += (dbfid[t][i] * dbfid[t][j]) / var_b(trianglelist[t][0],trianglelist[t][1],trianglelist[t][2])
         
         print datetime.datetime.now()
         print "F_B squeezed done"
@@ -765,10 +770,10 @@ def integrate_coeff(name_of_function,index,k,nev): # integrates the correspondin
 def coeff_array(name_of_function,k): # return an array of the value of the coeff for all parameters in shift_list for a given k
     if type(k) == type(float()):
         print("k = %.5f" % k)
-        nev = 4*ne_shifts # more evaluations for the power spectrum, only few k values
+        nev = 4*ne # more evaluations for the power spectrum, only few k values
     else :
         print("triangle : (%.3f, %.3f %.3f)" % (k[0],k[1],k[2]))
-        nev = ne_shifts # ne_shifts for the bispectrum, 24k triangles
+        nev = ne #  for the bispectrum, 24k triangles
     return [ integrate_coeff(name_of_function,ind,k,nev) for ind in range(len(shift_list)) ]
 
 def make_mappable(name_of_function) : # makes a function of a single variable k for intergation in parallel
@@ -845,10 +850,10 @@ def coefficients_bis_par(par,a0,a1,a2,a3): # computes the coefficients of the qu
     #print "length dbfid %i" % len(dbfid)
     
     for i in range(len(trianglelist)):
-        A0 += a0[i][shift_list.index(par)]*dbfid[i][param.index(par)]/Var2Factor(trianglelist[i][0],trianglelist[i][1],trianglelist[i][2])
-        A1 += a1[i][shift_list.index(par)]*dbfid[i][param.index(par)]/Var2Factor(trianglelist[i][0],trianglelist[i][1],trianglelist[i][2])
-        A2 += a2[i][shift_list.index(par)]*dbfid[i][param.index(par)]/Var2Factor(trianglelist[i][0],trianglelist[i][1],trianglelist[i][2])
-        A3 += a3[i][shift_list.index(par)]*dbfid[i][param.index(par)]/Var2Factor(trianglelist[i][0],trianglelist[i][1],trianglelist[i][2])
+        A0 += a0[i][shift_list.index(par)]*dbfid[i][param.index(par)]/var_b(trianglelist[i][0],trianglelist[i][1],trianglelist[i][2])
+        A1 += a1[i][shift_list.index(par)]*dbfid[i][param.index(par)]/var_b(trianglelist[i][0],trianglelist[i][1],trianglelist[i][2])
+        A2 += a2[i][shift_list.index(par)]*dbfid[i][param.index(par)]/var_b(trianglelist[i][0],trianglelist[i][1],trianglelist[i][2])
+        A3 += a3[i][shift_list.index(par)]*dbfid[i][param.index(par)]/var_b(trianglelist[i][0],trianglelist[i][1],trianglelist[i][2])
     
 #print [A0,A1,A2,A3]
 
@@ -916,6 +921,7 @@ def shift(file): # computes the shift in a given parameter "par" leading to a sy
         for par in shift_list:
             
             coe = coefficients_bis_par(par,a0,a1,a2,a3)
+            
             sol = np.roots([coe[3],coe[2],coe[1],coe[0]-deltafnl/Finv[param.index("fnl"),param.index(par)]])
             
             print "solution(s) for shift %s :" % par
@@ -960,142 +966,136 @@ def shift(file): # computes the shift in a given parameter "par" leading to a sy
             file.write("delta fnl = %.3f" % deltafnl)
             file.write("\n \n")
 
+# double shifts with bng constrained
 
-###########################################
-##  Systematic shifts OLD WAY, PRECISION? #
-###########################################
-#
-#def bkfid(k): # b(k) at fid values
-#    print datetime.datetime.now()
-#    def f(y):
-#        return B_integrand(k,y[0],y[1],(fnlfid ,b10fid, b20fid, b01fid, b11fid, b02fid, chi1fid, w10fid, sigfid, Rfid))
-#    integ = vegas.Integrator([[qmin, qmax], [-1.,1.]])
-#    result = integ(f, nitn=ni, neval=ne)
-#    #print result.summary()
-#    #print datetime.datetime.now()
-#    
-#    return result.mean
-#
-#def bkshift(k): # b(k) at shifted values
-#    def f(y):
-#        return B_integrand(k,y[0],y[1],[fnlshift ,b10shift, b20shift, b01shift, b11shift, b02shift, chi1shift, w10shift, sigshift, Rshift])
-#    integ = vegas.Integrator([[qmin, qmax], [-1.,1.]])
-#    
-#    result = integ(f, nitn=ni, neval=ne)
-#    #print result.summary()
-#    return result.mean
-#
-#def compute_bfid(): # computes b(k) at fid values of parameters for each triangle of trianglelist and saves it
-#    global bfid
-#    
-#    if os.path.isfile(modelhere+'/temp/bfid_'+shapehere+'.npz') and recbfid == "no":
-#        data = np.load(modelhere+'/temp/bfid_'+shapehere+'.npz')
-#        bfid = data['bfid'].tolist()
-#        data.close()
-#        print "bfid loaded"
-#        #print bfid
-#    else :
-#        print datetime.datetime.now()
-#        print "computing bfid"
-#
-#        poolB = multiprocessing.Pool(processes=ncores); # start a multiprocess
-#        bfid = poolB.map(bkfid, trianglelist)
-#        poolB.close()
-#        
-#        #print bfid
-#        print datetime.datetime.now()
-#        print "bfid done"
-#        np.savez(modelhere+'/temp/bfid_'+shapehere+'.npz',bfid=np.asarray(bfid))
-#
-#def compute_pshift():
-#    global pshift
-#    print datetime.datetime.now()
-#    print "computing pshift"
-#    
-#    poolB = multiprocessing.Pool(processes=ncores); # start a multiprocess
-#    pshift = poolB.map(pkshift, klist)
-#    poolB.close()
-#    
-#    #print pshift
-#    print datetime.datetime.now()
-#    print "pshift done"
-#
-#def compute_bshift():
-#    global bshift
-#    print datetime.datetime.now()
-#    print "computing bshift"
-#    
-#    poolB = multiprocessing.Pool(processes=ncores); # start a multiprocess
-#    bshift = poolB.map(bkshift, trianglelist)
-#    poolB.close()
-#    
-#    #print bshift
-#    print datetime.datetime.now()
-#    print "bshift done"
-#
-#def fnlfactor_p(shiftedparam, value) : #computes the shift of fnl when shiftedparam is shifted to value
-#    if os.path.isfile(modelhere+'/temp/fnlp_'+shapehere+'_'+shiftedparam+'.npz') and recfnlp == "no":
-#        data = np.load(modelhere+'/temp/fnlp_'+shapehere+'_'+shiftedparam+'.npz')
-#        fnltemp = data['fnlp'].tolist()
-#        data.close()
-#        print "fnlp loaded"
-#    #print fnlp
-#    else :
-#        set_shift(shiftedparam, value) # sets all _shift to fiducial value except shiftedparam which is set to value. sets "currentparam" to shiftedparam
-#        compute_pshift()
-#        compute_pfid()
-#        compute_dpfid()
-#
-#        fnltemp = 0;
-#        for t in range(len(klist)):
-#            fnltemp += (pshift[t]-pfid[t]) * dpfid[t][allparam.index(shiftedparam)] / var_p(klist[t])
-#    
-#        np.savez(modelhere+'/temp/fnlp_'+shapehere+'_'+shiftedparam+'.npz',fnlp=np.asarray(fnltemp))
-#    return fnltemp
-#
-#def fnlfactor_b(shiftedparam, value) : #computes the shift of fnl when shiftedparam is shifted to value
-#    if os.path.isfile(modelhere+'/temp/fnlb_'+shapehere+'_'+shiftedparam+'.npz') and recfnlb == "no":
-#        data = np.load(modelhere+'/temp/fnlb_'+shapehere+'_'+shiftedparam+'.npz')
-#        fnltemp = data['fnlb'].tolist()
-#        data.close()
-#        print "fnlb loaded"
-#        #print fnlb
-#    else :
-#        set_shift(shiftedparam, value) # sets all _shift to fiducial value except shiftedparam which is set to value. sets "currentparam" to shiftedparam
-#        compute_bshift()
-#        compute_bfid()
-#        compute_pfid()
-#        compute_dbfid()
-#    
-#        fnltemp = 0;
-#        for t in range(len(trianglelist)):
-#            fnltemp += (bshift[t]-bfid[t]) * dbfid[t][allparam.index(shiftedparam)] /  Var2Factor(trianglelist[t][0],trianglelist[t][1],trianglelist[t][2])
-#        
-#        np.savez(modelhere+'/temp/fnlb_'+shapehere+'_'+shiftedparam+'.npz',fnlb=np.asarray(fnltemp))
-#    return fnltemp
-#
-#def compute_fnlshift(shiftedparam, value) : # shift in fnl
-#    fnltemp = 0;
-#    
-#    if datahere == "P":
-#        fnltemp = fnlfactor_p(shiftedparam, value)
-#    if datahere == "B":
-#        fnltemp = fnlfactor_b(shiftedparam, value)
-#    if datahere == "P+B":
-#        fnltemp = fnlfactor_p(shiftedparam, value) + fnlfactor_b(shiftedparam, value)
-#    
-#    fnltemp *= linalg.inv(fisher())[allparam.index(shiftedparam),allparam.index("fnl")]
-#
-#    return fnltemp
-#
-## returns a list of shifted fnl values (without the F inverse factor) corresponding to parameter values of interp_list( param )
-#def compute_fnlshift_list(shiftedparam) :
-#
-#    fnllist = []
-#
-#    for shiftvale in interp_list(shiftedparam):
-#        fnllist.append(compute_fnlshift(shiftedparam, shiftvale))
-#    
-#    return fnllist
-#
+def double_shift(file): # computes the shift in a given parameter "par" leading to a systematic shift in fnl of deltafnl for a given data combination
+    # file is the file to which we write the results
+    
+    #print "data here %s, shape here %s" % (datahere,shapehere)
+    #file.write(print "data here %s, shape here %s" % (datahere,shapehere))
+    
+    #print "compute shift list"
+    compute_shift_list() # needs to be allocated
+    
+    #print "compute shift list"
+    double_shift_list = (("b20","b11"),("b20","b02"),("b20","chi1"),("b20","w10"),("b11","b02"),("b11","chi1"),("b11","w10"),("b02","chi1"),("b02","w10"), ("chi1","w10"))  # combination of 2 parmaetners appearing in "bng" that we will solve for
+    
+    #print "compute k and tri list"
+    compute_list()
+    
+    F = fisher() # fisher for the current data
+    Finv = linalg.inv(F);
+    
+    deltafnl = np.sqrt(Finv[param.index('fnl'),param.index('fnl')]) # syst shift in fnl that we want the shift in the parameter to generate, here equal to fnl marginalized
+    
+    compute_pfid() # be sure they are assigned
+    
+    
+    if datahere == "P" :
+        print("###### systematic constrained shifts: P ######")
+        file.write("----- data used: P ----- \n")
+        
+        compute_dpfid()
+        
+        a = map_to_list(a_integrand,klist) # loads if already computed, esle computes it.
+        b = map_to_list(b_integrand,klist)
+        c = map_to_list(c_integrand,klist)
+        
+        for pars in double_shift_list: # pars contained the 2 parameter in consideration
+            
+            (ax,bx,cx) = coefficients_ps_par(pars[0],a,b,c) # coefficient for 1st param
+            (ay,by,cy) = coefficients_ps_par(pars[1],a,b,c) # coefficient for 2nd param
+            Fx = 1./Finv[param.index("fnl"),param.index(pars[0])] # fisher factor for 1st and second
+            Fy = 1./Finv[param.index("fnl"),param.index(pars[1])]
+            
+            (da,db,dc) = double_shift_abc(bng,sigma0,sigma1,sigma2,b20fid, b11fid, b02fid, chi1fid, w10fid,Fx,ax,bx,cx,Fy,ay,by,cy,double_shift_list.index(pars))
+            
+            sol = np.roots([da,db,dc-deltafnl])
+            
+            print "solution(s) for double shift %s, compensated by %s" % pars
+            print sol-fiducial[param.index(pars[0])]
+            print "delta fnl = %.3f" % deltafnl
+            
+            file.write("solution(s) for shift %s, compensated by %s \n" % pars )
+            (sol-fiducial[param.index(pars[0])]).tofile(file, sep=", ", format="%s")
+            file.write("\n")
+            file.write("delta fnl = %.3f" % deltafnl)
+            file.write("\n \n")
+
+    if datahere == "B" :
+        print("###### systematic constrained shifts: B ######")
+        file.write("----- data used: B ----- \n")
+        
+        compute_dbfid()
+        
+        a0 = map_to_list(a0_integrand,trianglelist)
+        a1 = map_to_list(a1_integrand,trianglelist)
+        a2 = map_to_list(a2_integrand,trianglelist)
+        a3 = map_to_list(a3_integrand,trianglelist)
+        
+        for pars in double_shift_list: # pars contained the 2 parameter in consideration
+            
+            (a0x,a1x,a2x,a3x) = coefficients_bis_par(pars[0],a0,a1,a2,a3)
+            (a0y,a1y,a2y,a3y) = coefficients_bis_par(pars[1],a0,a1,a2,a3)
+            Fx = 1./Finv[param.index("fnl"),param.index(pars[0])] # fisher factor for 1st and second
+            Fy = 1./Finv[param.index("fnl"),param.index(pars[1])]
+            
+            (da0,da1,da2,da3) = double_shift_a0123(bng,sigma0,sigma1,sigma2,b20fid,b11fid,b02fid,chi1fid,w10fid,Fx,a0x,a1x,a2x,a3x,Fy,a0y,a1y,a2y,a3y,double_shift_list.index(pars))
+            
+            sol = np.roots([da3,da2,da1,da0-deltafnl])
+            
+            print "solution(s) for double shift %s, compensated by %s" % pars
+            print sol-fiducial[param.index(pars[0])]
+            print "delta fnl = %.3f" % deltafnl
+            
+            file.write("solution(s) for shift %s, compensated by %s \n" % pars )
+            (sol-fiducial[param.index(pars[0])]).tofile(file, sep=", ", format="%s")
+            file.write("\n")
+            file.write("delta fnl = %.3f" % deltafnl)
+            file.write("\n \n")
+
+
+    if datahere == "P+B":
+        print("###### systematic shifts: P+B ######")
+        file.write("----- data used: P+B ----- \n")
+        
+        compute_dbfid()
+        compute_dpfid()
+        
+        a = map_to_list(a_integrand,klist) # loads if already computed, esle computes it.
+        b = map_to_list(b_integrand,klist)
+        c = map_to_list(c_integrand,klist)
+        
+        a0 = map_to_list(a0_integrand,trianglelist)
+        a1 = map_to_list(a1_integrand,trianglelist)
+        a2 = map_to_list(a2_integrand,trianglelist)
+        a3 = map_to_list(a3_integrand,trianglelist)
+        
+        for pars in double_shift_list:
+            
+            (ax,bx,cx) = coefficients_ps_par(pars[0],a,b,c) # coefficient for 1st param
+            (ay,by,cy) = coefficients_ps_par(pars[1],a,b,c) # coefficient for 2nd param
+            
+            (a0x,a1x,a2x,a3x) = coefficients_bis_par(pars[0],a0,a1,a2,a3)
+            (a0y,a1y,a2y,a3y) = coefficients_bis_par(pars[1],a0,a1,a2,a3)
+            
+            Fx = 1./Finv[param.index("fnl"),param.index(pars[0])] # fisher factor for 1st and second
+            Fy = 1./Finv[param.index("fnl"),param.index(pars[1])]
+            
+            (da,db,dc) = double_shift_abc(bng,sigma0,sigma1,sigma2,b20fid, b11fid, b02fid, chi1fid, w10fid,Fx,ax,bx,cx,Fy,ay,by,cy,double_shift_list.index(pars))
+            (da0,da1,da2,da3) = double_shift_a0123(bng,sigma0,sigma1,sigma2,b20fid,b11fid,b02fid,chi1fid,w10fid,Fx,a0x,a1x,a2x,a3x,Fy,a0y,a1y,a2y,a3y,double_shift_list.index(pars))
+        
+            sol = np.roots([da3,da2+da,da1+db,da0+dc-deltafnl])
+            
+            print "solution(s) for double shift %s, compensated by %s" % pars
+            print sol-fiducial[param.index(pars[0])]
+            print "delta fnl = %.3f" % deltafnl
+            
+            file.write("solution(s) for shift %s, compensated by %s \n" % pars )
+            (sol-fiducial[param.index(pars[0])]).tofile(file, sep=", ", format="%s")
+            file.write("\n")
+            file.write("delta fnl = %.3f" % deltafnl)
+            file.write("\n \n")
+
+
 

@@ -1,0 +1,213 @@
+----- data used: P ----- 
+solution(s) for shift b10 : 
+-5.21527116262, 0.00203212281367
+delta fnl = 1093.560
+ 
+solution(s) for shift b20 : 
+-4.29362424566, 0.00668327990116
+delta fnl = 1093.560
+ 
+solution(s) for shift b01 : 
+-246.426486793, 0.0434099174261
+delta fnl = 1093.560
+ 
+solution(s) for shift b11 : 
+0.00279846875985, -20.8809166843
+delta fnl = 1093.560
+ 
+solution(s) for shift b02 : 
+0.0250027046558, -115.318678719
+delta fnl = 1093.560
+ 
+solution(s) for shift chi1 : 
+-19.6237132508, -0.0096898398878
+delta fnl = 1093.560
+ 
+solution(s) for shift w10 : 
+-58.8000609335, -0.00135739732479
+delta fnl = 1093.560
+ 
+
+----- data used: P ----- 
+solution(s) for shift b20, compensated by b11 
+-18.5618811669, 14.2753692657
+delta fnl = 1093.560
+ 
+solution(s) for shift b20, compensated by b02 
+-18.5623883582, 14.2754650795
+delta fnl = 1093.560
+ 
+solution(s) for shift b20, compensated by chi1 
+-18.5621863666, 14.2754219706
+delta fnl = 1093.560
+ 
+solution(s) for shift b20, compensated by w10 
+-18.5624182678, 14.2754677217
+delta fnl = 1093.560
+ 
+solution(s) for shift b11, compensated by b02 
+7122.96333257, -7142.24918925
+delta fnl = 1093.560
+ 
+solution(s) for shift b11, compensated by chi1 
+6062.71985613, -6071.45473268
+delta fnl = 1093.560
+ 
+solution(s) for shift b11, compensated by w10 
+7304.62453585, -7326.40743801
+delta fnl = 1093.560
+ 
+solution(s) for shift b02, compensated by chi1 
+43086.7374519, -43021.5720065
+delta fnl = 1093.560
+ 
+solution(s) for shift b02, compensated by w10 
+-235073.919949, 234691.747556
+delta fnl = 1093.560
+ 
+solution(s) for shift chi1, compensated by w10 
+-11329.7824924, 11308.0369413
+delta fnl = 1093.560
+ 
+----- data used: B ----- 
+solution(s) for shift b10 : 
+(-3.80735572089+2.19770005363j), (-3.80735572089-2.19770005363j), (0.000213984131472+0j)
+delta fnl = 167.907
+ 
+solution(s) for shift b20 : 
+-0.000568867260813
+delta fnl = 167.907
+ 
+solution(s) for shift b01 : 
+(-340.461434635+282.36051303j), (-340.461434635-282.36051303j), (0.266879680488+0j)
+delta fnl = 167.907
+ 
+solution(s) for shift b11 : 
+0.0259061965823
+delta fnl = 167.907
+ 
+solution(s) for shift b02 : 
+-115.346852955
+delta fnl = 167.907
+ 
+solution(s) for shift chi1 : 
+-0.227644153994
+delta fnl = 167.907
+ 
+solution(s) for shift w10 : 
+-507.061782418
+delta fnl = 167.907
+ 
+
+----- data used: B ----- 
+solution(s) for shift b20, compensated by b11 
+(114.822837359+0j), (-0.0192019243362+1.5522556916j), (-0.0192019243362-1.5522556916j)
+delta fnl = 167.907
+ 
+solution(s) for shift b20, compensated by b02 
+(114.822836791+0j), (-0.0192021098386+1.55226940941j), (-0.0192021098386-1.55226940941j)
+delta fnl = 167.907
+ 
+solution(s) for shift b20, compensated by chi1 
+(114.822836691+0j), (-0.0192021425065+1.55227182517j), (-0.0192021425065-1.55227182517j)
+delta fnl = 167.907
+ 
+solution(s) for shift b20, compensated by w10 
+(114.822836791+0j), (-0.0192021098355+1.55226940918j), (-0.0192021098355-1.55226940918j)
+delta fnl = 167.907
+ 
+solution(s) for shift b11, compensated by b02 
+(-2.65851487927+24.1472383076j), (-2.65851487927-24.1472383076j), (-44.4828017697+0j)
+delta fnl = 167.907
+ 
+solution(s) for shift b11, compensated by chi1 
+(-3.39228683843+22.8763066016j), (-3.39228683843-22.8763066016j), (-43.0152578456+0j)
+delta fnl = 167.907
+ 
+solution(s) for shift b11, compensated by w10 
+(-2.65843595323+24.1473750117j), (-2.65843595323-24.1473750117j), (-44.4829596218+0j)
+delta fnl = 167.907
+ 
+solution(s) for shift b02, compensated by chi1 
+(-50.1177296826+41.6519693471j), (-50.1177296826-41.6519693471j), (-122.261058087+0j)
+delta fnl = 167.907
+ 
+solution(s) for shift b02, compensated by w10 
+(-598.552743334+908.265338181j), (-598.552743334-908.265338181j), (974.608969207+0j)
+delta fnl = 167.907
+ 
+solution(s) for shift chi1, compensated by w10 
+(-36.1323253246+0j), (40.7882028733+44.4100713534j), (40.7882028733-44.4100713534j)
+delta fnl = 167.907
+ 
+----- data used: P+B ----- 
+solution(s) for shift b10 : 
+(-6.62548289298+2.16330619471j), (-6.62548289298-2.16330619471j), (-0.0163669612544+0j)
+delta fnl = 92.575
+ 
+solution(s) for shift b20 : 
+-15.7465662394, -0.00249986032049
+delta fnl = 92.575
+ 
+solution(s) for shift b01 : 
+-4703.16143325, -266.571787692, 0.320616191201
+delta fnl = 92.575
+ 
+solution(s) for shift b11 : 
+0.0323149886842, -22.8372373093
+delta fnl = 92.575
+ 
+solution(s) for shift b02 : 
+0.0238635966377, -115.329270214
+delta fnl = 92.575
+ 
+solution(s) for shift chi1 : 
+-19.9804268549, -0.0229106546247
+delta fnl = 92.575
+ 
+solution(s) for shift w10 : 
+-58.7857653439, -0.0159256267125
+delta fnl = 92.575
+ 
+
+----- data used: P+B ----- 
+solution(s) for shift b20, compensated by b11 
+(125.154344688+0j), (-0.180184739015+0.28164831418j), (-0.180184739015-0.28164831418j)
+delta fnl = 92.575
+ 
+solution(s) for shift b20, compensated by b02 
+(125.160892336+0j), (-0.179975804428+0.281779338867j), (-0.179975804428-0.281779338867j)
+delta fnl = 92.575
+ 
+solution(s) for shift b20, compensated by chi1 
+(125.162076398+0j), (-0.179937267313+0.28180290373j), (-0.179937267313-0.28180290373j)
+delta fnl = 92.575
+ 
+solution(s) for shift b20, compensated by w10 
+(125.160943731+0j), (-0.179973246681+0.281780890015j), (-0.179973246681-0.281780890015j)
+delta fnl = 92.575
+ 
+solution(s) for shift b11, compensated by b02 
+(-12.718304747+6.73383900482j), (-12.718304747-6.73383900482j), (-24.3319563971+0j)
+delta fnl = 92.575
+ 
+solution(s) for shift b11, compensated by chi1 
+(-12.7498156626+6.65971548325j), (-12.7498156626-6.65971548325j), (-24.2757530947+0j)
+delta fnl = 92.575
+ 
+solution(s) for shift b11, compensated by w10 
+(-12.7174725256+6.7341855031j), (-12.7174725256-6.7341855031j), (-24.3338899498+0j)
+delta fnl = 92.575
+ 
+solution(s) for shift b02, compensated by chi1 
+(-62.8033421971+19.6327881729j), (-62.8033421971-19.6327881729j), (-96.8988097548+0j)
+delta fnl = 92.575
+ 
+solution(s) for shift b02, compensated by w10 
+(-637.663902824+0j), (205.34111472+485.259693062j), (205.34111472-485.259693062j)
+delta fnl = 92.575
+ 
+solution(s) for shift chi1, compensated by w10 
+(27.1179554258+21.0516999515j), (27.1179554258-21.0516999515j), (-8.97699549755+0j)
+delta fnl = 92.575
+ 

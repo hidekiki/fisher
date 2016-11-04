@@ -55,7 +55,9 @@ allpriors = [0.,0.,0.,0.,0.,0.,0.,0.,0.,0.] # priors
         #[["equilateral",],["P","B","P+B"],[ 1.,1., 1.,0.,0.,0.,0.,0., 1., 1.],1.,0.16]
 #       ] #shape, data, parameters , n, kmax "P",
 
-models=[[["equilateral",],["P","B","P+B"],[1.,1.,1.,0.,0.,0.,0.,0.,1.,1.],1.,0.16,0.666]]
+moments = (bng,s0,s1,s2) = (2.58659, 0.715,0.311, 0.219)
+
+models=[[["equilateral",],["P","B","P+B"],[1.,1.,1.,1.,1.,1.,1.,1.,1.,1.],1.,0.16,moments]]
 
 #########################
 #    Loop over models   #
@@ -66,8 +68,8 @@ for m in models :
     active = m[2] # choose which parameters to include in the model
     nn=m[3] #set n
     kkhigh = m[4] #set kmax
-    bngg = m[5] #bng for p squeezed
-    fishfun.initialize(active, allfiducial, allpriors,nn,kkhigh,bngg); # initialization
+    mmoments = m[5] #bng for p squeezed
+    fishfun.initialize(active, allfiducial, allpriors,nn,kkhigh,mmoments); # initialization
     fishfun.model_output()
     param = fishfun.param # for convienience
     fnlindex = param.index("fnl") #for convienience
@@ -163,8 +165,8 @@ for m in models :
 #            Finv = linalg.inv(F); #inverse
 
             #fishfun.coefficients_ps_par("b10",a,b,c,0.1,Finv)
-            print "test fishfun.shift "
-            fishfun.shift(fsyst)
+            print "test fishfun.double_shift "
+            fishfun.double_shift(fsyst)
             
             #quit()
             

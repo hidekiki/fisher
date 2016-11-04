@@ -140,3 +140,142 @@ def set_shift(shiftedparameter, value) :
 # variance of reduced bispectrum function in redshift space # commented because definition is directly in the Fisher
 #def Var2B(k1,k2,k3,b10,b01):
 #    return Var2Factor(k1,k2,k3)* (Ptot(k1,b10,b10) * Ptot(k2,b10,b01) * Ptot(k3,b10,b01) );
+
+###########################################
+##  Systematic shifts OLD WAY, PRECISION? #
+###########################################
+#
+#def bkfid(k): # b(k) at fid values
+#    print datetime.datetime.now()
+#    def f(y):
+#        return B_integrand(k,y[0],y[1],(fnlfid ,b10fid, b20fid, b01fid, b11fid, b02fid, chi1fid, w10fid, sigfid, Rfid))
+#    integ = vegas.Integrator([[qmin, qmax], [-1.,1.]])
+#    result = integ(f, nitn=ni, neval=ne)
+#    #print result.summary()
+#    #print datetime.datetime.now()
+#
+#    return result.mean
+#
+#def bkshift(k): # b(k) at shifted values
+#    def f(y):
+#        return B_integrand(k,y[0],y[1],[fnlshift ,b10shift, b20shift, b01shift, b11shift, b02shift, chi1shift, w10shift, sigshift, Rshift])
+#    integ = vegas.Integrator([[qmin, qmax], [-1.,1.]])
+#
+#    result = integ(f, nitn=ni, neval=ne)
+#    #print result.summary()
+#    return result.mean
+#
+#def compute_bfid(): # computes b(k) at fid values of parameters for each triangle of trianglelist and saves it
+#    global bfid
+#
+#    if os.path.isfile(modelhere+'/temp/bfid_'+shapehere+'.npz') and recbfid == "no":
+#        data = np.load(modelhere+'/temp/bfid_'+shapehere+'.npz')
+#        bfid = data['bfid'].tolist()
+#        data.close()
+#        print "bfid loaded"
+#        #print bfid
+#    else :
+#        print datetime.datetime.now()
+#        print "computing bfid"
+#
+#        poolB = multiprocessing.Pool(processes=ncores); # start a multiprocess
+#        bfid = poolB.map(bkfid, trianglelist)
+#        poolB.close()
+#
+#        #print bfid
+#        print datetime.datetime.now()
+#        print "bfid done"
+#        np.savez(modelhere+'/temp/bfid_'+shapehere+'.npz',bfid=np.asarray(bfid))
+#
+#def compute_pshift():
+#    global pshift
+#    print datetime.datetime.now()
+#    print "computing pshift"
+#
+#    poolB = multiprocessing.Pool(processes=ncores); # start a multiprocess
+#    pshift = poolB.map(pkshift, klist)
+#    poolB.close()
+#
+#    #print pshift
+#    print datetime.datetime.now()
+#    print "pshift done"
+#
+#def compute_bshift():
+#    global bshift
+#    print datetime.datetime.now()
+#    print "computing bshift"
+#
+#    poolB = multiprocessing.Pool(processes=ncores); # start a multiprocess
+#    bshift = poolB.map(bkshift, trianglelist)
+#    poolB.close()
+#
+#    #print bshift
+#    print datetime.datetime.now()
+#    print "bshift done"
+#
+#def fnlfactor_p(shiftedparam, value) : #computes the shift of fnl when shiftedparam is shifted to value
+#    if os.path.isfile(modelhere+'/temp/fnlp_'+shapehere+'_'+shiftedparam+'.npz') and recfnlp == "no":
+#        data = np.load(modelhere+'/temp/fnlp_'+shapehere+'_'+shiftedparam+'.npz')
+#        fnltemp = data['fnlp'].tolist()
+#        data.close()
+#        print "fnlp loaded"
+#    #print fnlp
+#    else :
+#        set_shift(shiftedparam, value) # sets all _shift to fiducial value except shiftedparam which is set to value. sets "currentparam" to shiftedparam
+#        compute_pshift()
+#        compute_pfid()
+#        compute_dpfid()
+#
+#        fnltemp = 0;
+#        for t in range(len(klist)):
+#            fnltemp += (pshift[t]-pfid[t]) * dpfid[t][allparam.index(shiftedparam)] / var_p(klist[t])
+#
+#        np.savez(modelhere+'/temp/fnlp_'+shapehere+'_'+shiftedparam+'.npz',fnlp=np.asarray(fnltemp))
+#    return fnltemp
+#
+#def fnlfactor_b(shiftedparam, value) : #computes the shift of fnl when shiftedparam is shifted to value
+#    if os.path.isfile(modelhere+'/temp/fnlb_'+shapehere+'_'+shiftedparam+'.npz') and recfnlb == "no":
+#        data = np.load(modelhere+'/temp/fnlb_'+shapehere+'_'+shiftedparam+'.npz')
+#        fnltemp = data['fnlb'].tolist()
+#        data.close()
+#        print "fnlb loaded"
+#        #print fnlb
+#    else :
+#        set_shift(shiftedparam, value) # sets all _shift to fiducial value except shiftedparam which is set to value. sets "currentparam" to shiftedparam
+#        compute_bshift()
+#        compute_bfid()
+#        compute_pfid()
+#        compute_dbfid()
+#
+#        fnltemp = 0;
+#        for t in range(len(trianglelist)):
+#            fnltemp += (bshift[t]-bfid[t]) * dbfid[t][allparam.index(shiftedparam)] /  Var2Factor(trianglelist[t][0],trianglelist[t][1],trianglelist[t][2])
+#
+#        np.savez(modelhere+'/temp/fnlb_'+shapehere+'_'+shiftedparam+'.npz',fnlb=np.asarray(fnltemp))
+#    return fnltemp
+#
+#def compute_fnlshift(shiftedparam, value) : # shift in fnl
+#    fnltemp = 0;
+#
+#    if datahere == "P":
+#        fnltemp = fnlfactor_p(shiftedparam, value)
+#    if datahere == "B":
+#        fnltemp = fnlfactor_b(shiftedparam, value)
+#    if datahere == "P+B":
+#        fnltemp = fnlfactor_p(shiftedparam, value) + fnlfactor_b(shiftedparam, value)
+#
+#    fnltemp *= linalg.inv(fisher())[allparam.index(shiftedparam),allparam.index("fnl")]
+#
+#    return fnltemp
+#
+## returns a list of shifted fnl values (without the F inverse factor) corresponding to parameter values of interp_list( param )
+#def compute_fnlshift_list(shiftedparam) :
+#
+#    fnllist = []
+#
+#    for shiftvale in interp_list(shiftedparam):
+#        fnllist.append(compute_fnlshift(shiftedparam, shiftvale))
+#
+#    return fnllist
+#
+
