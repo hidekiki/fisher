@@ -3,15 +3,15 @@ print("\n \n")
 print("######### COMPUTING... ######### \n")
 
 #importing useful packages
-import sys
-import csv
+#import sys
+#import csv
 
-import matplotlib
-from matplotlib import pyplot as plt
-import matplotlib.cm as cm
-from matplotlib.patches import Ellipse
-from matplotlib import rc
-from matplotlib.backends.backend_pdf import PdfPages
+#import matplotlib
+#from matplotlib import pyplot as plt
+#import matplotlib.cm as cm
+#from matplotlib.patches import Ellipse
+#from matplotlib import rc
+#from matplotlib.backends.backend_pdf import PdfPages
 
 import numpy as np
 from numpy import *
@@ -23,13 +23,15 @@ from scipy import misc
 from scipy import interpolate
 from scipy.stats import chi2
 
-from pylab import *
+#from pylab import *
 
 import os.path
 
 #from extras import Survey
 
 import fishfun, simplemodel, fullmodel
+
+from chi2 import chi2_delta_b, chi2_delta_p
 
 ##############################################
 #    Parameters for the most general model   # (will be used for all model combinations)
@@ -55,7 +57,7 @@ allpriors = [0.,0.,0.,0.,0.,0.,0.,0.,0.,0.] # priors
         #[["equilateral",],["P","B","P+B"],[ 1.,1., 1.,0.,0.,0.,0.,0., 1., 1.],1.,0.16]
 #       ] #shape, data, parameters , n, kmax "P",
 
-models=[[["equilateral",],["P","B","P+B"],[1.,1.,1.,0.,0.,0.,0.,0.,1.,1.],1.,0.16,0.666]]
+models=[[["equilateral",],["P","B","P+B"],[1.,1.,1.,1.,1.,1.,1.,1.,1.,1.],1.,0.05,0.666]]
 
 #########################
 #    Loop over models   #
@@ -131,9 +133,9 @@ for m in models :
             #fishfun.compute_shift_list()
             
             #print "compute k and tri list"
-            #fishfun.compute_list()
-#            print fishfun.klist
-            #print fishfun.trianglelist
+            fishfun.compute_list()
+            #print len(fishfun.klist)
+            #print len(fishfun.trianglelist)
 
 #            print "test a_integrand"
 #            print fishfun.a_integrand(0.1,0.1,0.1,allfiducial,1)
@@ -163,9 +165,24 @@ for m in models :
 #            Finv = linalg.inv(F); #inverse
 
             #fishfun.coefficients_ps_par("b10",a,b,c,0.1,Finv)
-            print "test fishfun.shift "
-            fishfun.shift(fsyst)
-            
+#            print "test fishfun.shift "
+#            fishfun.shift(fsyst)
+
+            # testing chi2
+#            print len(fishfun.coeff_p_indices)
+#            print len(fishfun.coeff_b_indices)
+#            print len(fishfun.coeff_p_names)
+#            print len(fishfun.coeff_b_names)
+#            
+#            for ind in fishfun.coeff_b_indices:
+#                print chi2_delta_b((0.1,0.1,0.1),0.1,0.1,(fnlfid ,b10fid, b20fid, b01fid, b11fid, b02fid, chi1fid, w10fid, sigfid, Rfid),ind)
+#            
+#            for ind in fishfun.coeff_p_indices:
+#                print chi2_delta_p(0.1,0.1,0.1,(fnlfid ,b10fid, b20fid, b01fid, b11fid, b02fid, chi1fid, w10fid, sigfid, Rfid),ind)
+
+            fishfun.map_to_list(chi2_delta_p,fishfun.klist,fishfun.coeff_p_indices)
+            fishfun.map_to_list(chi2_delta_b,fishfun.trianglelist,fishfun.coeff_b_indices)
+
             #quit()
             
             #fishfun.compute_pfid()

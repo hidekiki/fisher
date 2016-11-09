@@ -24,7 +24,7 @@ import vegas
 
 from extras import set_active, cartesian, interp_list, set_shift
 
-import psutil # to see how many cores are allocated
+#import psutil # to see how many cores are allocated
 
 
 E = np.exp(1.)
@@ -33,11 +33,11 @@ E = np.exp(1.)
 qmin = 0.0001
 qmax = 10. #default
 #ncores =  len(psutil.Process().cpu_affinity()) # for cluster
-ncores =  multiprocessing.cpu_count() # for local
+ncores =  multiprocess.cpu_count() # for local
 n=1.; # default consider every n*kf for the bispectrum . for the power specutrm it computes every kf. 
 ni = 2; #number iterations
-ne = 3500; #number of evaluations #3500 normal
-ne_shifts = 1000
+ne = 500; #number of evaluations #3500 normal, 5000 hiprec
+#ne_chi2_b = 1000 # number of eval for chi2
 
 #######################
 #  survey parameters  #
@@ -320,9 +320,11 @@ def Fshape(k1,k2,k3): #"equilateral":
 #    else :
 #        print "wrong model name"
 
-#from fullmodel import P_integrand, DP_integrand, B_integrand, DB_integrand, DP_sq_integrand, a_integrand, b_integrand, c_integrand, a0_integrand, a1_integrand, a2_integrand, a3_integrand
+from fullmodel import P_integrand, DP_integrand, B_integrand, DB_integrand, DP_sq_integrand, a_integrand, b_integrand, c_integrand, a0_integrand, a1_integrand, a2_integrand, a3_integrand
 
-from simplemodel import P_integrand, DP_integrand, B_integrand, DB_integrand, DP_sq_integrand, a_integrand, b_integrand, c_integrand, a0_integrand, a1_integrand, a2_integrand, a3_integrand
+#from simplemodel import P_integrand, DP_integrand, B_integrand, DB_integrand, DP_sq_integrand, a_integrand, b_integrand, c_integrand, a0_integrand, a1_integrand, a2_integrand, a3_integrand
+
+from chi2 import chi2_delta_b, chi2_delta_p
 
 
 # integrates and returns power spectrum for a given k general values of parameters (for use in "shift")
@@ -331,7 +333,7 @@ def pk(k,(fnlfid ,b10fid, b20fid, b01fid, b11fid, b02fid, chi1fid, w10fid, sigfi
     def f(y):
         return P_integrand(k,y[0],y[1],[fnlfid ,b10fid, b20fid, b01fid, b11fid, b02fid, chi1fid, w10fid, sigfid, Rfid])
     integ = vegas.Integrator([[qmin, qmax], [-1.,1.]])
-    result = integ(f, nitn=ni, neval=3*ne)
+    result = integ(f, nitn=ni, neval=4*ne)
     #print result.summary()
     return result.mean
 
@@ -366,7 +368,7 @@ def dpkpar(k,par):
     def f(y):
         return  DP_integrand(k,y[0],y[1],[fnlfid ,b10fid, b20fid, b01fid, b11fid, b02fid, chi1fid, w10fid, sigfid, Rfid],par)
     integ = vegas.Integrator([[qmin, qmax], [-1, 1]])
-    result = integ(f, nitn=ni, neval = 3*ne) # slightly more evaluations and iterations for the derivative to be sure to have about few percent accuracy
+    result = integ(f, nitn=ni, neval = 4*ne) # slightly more evaluations and iterations for the derivative to be sure to have about few percent accuracy
     #print result.summary()
     return result.mean
 
@@ -604,7 +606,7 @@ def dpkpar_sq(k,par):
     def f(y):
         return  DP_sq_integrand(k,y[0],y[1],[fnlfid ,b10fid, b20fid, b01fid, b11fid, b02fid, chi1fid, w10fid, sigfid, Rfid],bng,par)
     integ = vegas.Integrator([[qmin, qmax], [-1, 1]])
-    result = integ(f, nitn=ni, neval = 2*ne) # slightly more evaluations and iterations for the derivative to be sure to have about few percent accuracy
+    result = integ(f, nitn=ni, neval = 4*ne) # slightly more evaluations and iterations for the derivative to be sure to have about few percent accuracy
     #print result.summary()
     return result.mean
 
@@ -742,15 +744,17 @@ def fisher_squeezed(): # computes the fisher for shaperhere shape and datahere d
 
 
 shift_list=[]
+shift_indices=[]
 
 # create a list with only the parameters which we can solve for
 def compute_shift_list():
     global shift_list
     shift_list = [ x for x in param if (x not in ['R','sig','fnl'] )]
+    shift_indices = range(len(shift_list))
     #print "shift_list"
     #print shift_list
 
-def integrate_coeff(name_of_function,index,k,nev): # integrates the corresponding coefficient over q and x for given index (param) in shift list
+def integrate_func_index(name_of_function,index,k,nev): # integrates the corresponding coefficient over q and x for given index (param) in shift list
     print datetime.datetime.now()
     def f(y):
         return name_of_function(k,y[0],y[1],(fnlfid ,b10fid, b20fid, b01fid, b11fid, b02fid, chi1fid, w10fid, sigfid, Rfid),index)
@@ -762,22 +766,22 @@ def integrate_coeff(name_of_function,index,k,nev): # integrates the correspondin
     return result.mean
 
 
-def coeff_array(name_of_function,k): # return an array of the value of the coeff for all parameters in shift_list for a given k
+def coeff_array(name_of_function,k,index_list): # return an array of the value of the coeff for all parameters in shift_list for a given k
     if type(k) == type(float()):
         print("k = %.5f" % k)
-        nev = 4*ne_shifts # more evaluations for the power spectrum, only few k values
+        nev = 4*ne # more evaluations for the power spectrum, only few k values
     else :
         print("triangle : (%.3f, %.3f %.3f)" % (k[0],k[1],k[2]))
-        nev = ne_shifts # ne_shifts for the bispectrum, 24k triangles
-    return [ integrate_coeff(name_of_function,ind,k,nev) for ind in range(len(shift_list)) ]
+        nev = ne # ne for the bispectrum, 24k triangles
+    return [ integrate_func_index(name_of_function,ind,k,nev) for ind in index_list ]
 
-def make_mappable(name_of_function) : # makes a function of a single variable k for intergation in parallel
+def make_mappable(name_of_function,indices_here) : # makes a function of a single variable k for intergation in parallel
     def func_map(k):
-        return coeff_array(name_of_function,k)
+        return coeff_array(name_of_function,k,indices_here)
     return func_map
 
 # maps the function "name_of_function" to all "k" in "klist" and save the array to a file and returns the array
-def map_to_list(name_of_function,list):
+def map_to_list(name_of_function,list,index_list):
     
     if os.path.isfile(modelhere+'/temp/syst_'+shapehere+'_'+name_of_function.__name__+'.npz') : # if file exists, load it
         data = np.load(modelhere+'/temp/syst_'+shapehere+'_'+name_of_function.__name__+'.npz')
@@ -790,7 +794,7 @@ def map_to_list(name_of_function,list):
         print datetime.datetime.now()
         print "computing "+name_of_function.__name__+" : there are %i k/triangles's" % len(list)
         
-        yo = make_mappable(name_of_function)
+        yo = make_mappable(name_of_function,index_list)
         
         poolres = multiprocess.Pool(processes=ncores); # start a multiprocess
         res = poolres.map(yo,list)
@@ -801,7 +805,7 @@ def map_to_list(name_of_function,list):
         print name_of_function.__name__+" done"
         
         np.savez(modelhere+'/temp/syst_'+shapehere+'_'+name_of_function.__name__+'.npz',res=np.asarray(res))
-
+    print res
     return res
 
 def coefficients_ps_par(par,a,b,c): # computes the coefficients of the quadratic equation for a given shifted parameter. no RHS of eqn yet.
@@ -882,9 +886,9 @@ def shift(file): # computes the shift in a given parameter "par" leading to a sy
         
         compute_dpfid()
         
-        a = map_to_list(a_integrand,klist) # loads if already computed, esle computes it.
-        b = map_to_list(b_integrand,klist)
-        c = map_to_list(c_integrand,klist)
+        a = map_to_list(a_integrand,klist,shift_list) # loads if already computed, esle computes it.
+        b = map_to_list(b_integrand,klist,shift_list)
+        c = map_to_list(c_integrand,klist,shift_list)
         
         for par in shift_list:
         
@@ -908,10 +912,10 @@ def shift(file): # computes the shift in a given parameter "par" leading to a sy
         
         compute_dbfid()
         
-        a0 = map_to_list(a0_integrand,trianglelist)
-        a1 = map_to_list(a1_integrand,trianglelist)
-        a2 = map_to_list(a2_integrand,trianglelist)
-        a3 = map_to_list(a3_integrand,trianglelist)
+        a0 = map_to_list(a0_integrand,trianglelist,shift_list)
+        a1 = map_to_list(a1_integrand,trianglelist,shift_list)
+        a2 = map_to_list(a2_integrand,trianglelist,shift_list)
+        a3 = map_to_list(a3_integrand,trianglelist,shift_list)
         
         for par in shift_list:
             
@@ -935,14 +939,14 @@ def shift(file): # computes the shift in a given parameter "par" leading to a sy
         compute_dbfid()
         compute_dpfid()
         
-        a = map_to_list(a_integrand,klist) # loads if already computed, esle computes it.
-        b = map_to_list(b_integrand,klist)
-        c = map_to_list(c_integrand,klist)
+        a = map_to_list(a_integrand,klist,shift_list) # loads if already computed, esle computes it.
+        b = map_to_list(b_integrand,klist,shift_list)
+        c = map_to_list(c_integrand,klist,shift_list)
         
-        a0 = map_to_list(a0_integrand,trianglelist)
-        a1 = map_to_list(a1_integrand,trianglelist)
-        a2 = map_to_list(a2_integrand,trianglelist)
-        a3 = map_to_list(a3_integrand,trianglelist)
+        a0 = map_to_list(a0_integrand,trianglelist,shift_list)
+        a1 = map_to_list(a1_integrand,trianglelist,shift_list)
+        a2 = map_to_list(a2_integrand,trianglelist,shift_list)
+        a3 = map_to_list(a3_integrand,trianglelist,shift_list)
         
         for par in shift_list:
             
@@ -960,6 +964,60 @@ def shift(file): # computes the shift in a given parameter "par" leading to a sy
             file.write("delta fnl = %.3f" % deltafnl)
             file.write("\n \n")
 
+#################################
+##  Chi2 simple ng - full gauss #
+#################################
+
+coeff_p_names = ("constant","b20","b20^2","b10","b10b20","fnl","fnlb20","fnlb10","fnlb10b20")
+coeff_p_indices = ((0,0,0),(0,0,1),(0,0,2),(0,1,0),(0,1,1),(1,0,0),(1,0,1),(1,1,0),(1,1,1))
+coeff_b_names = ("constant","b20","b10","b10b20","b10^2","b10^2b20","b10^3","fnl","fnlb20","fnlb20^2","fnlb10","fnlb10b20","fnlb10b20^2","fnlb10^2","fnlb10^2b20","fnlb10^3")
+coeff_b_indices = ((0,0,0),(0,0,1),(0,1,0),(0,1,1),(0,2,0),(0,2,1),(0,3,0),(1,0,0),(1,0,1),(1,0,2),(1,1,0),(1,1,1),(1,1,2),(1,2,0),(1,2,1),(1,3,0))
+
+
+# we can reuse previous function to map chi2_b and chi2_p to triangle_list and k_list
+# all what is left to do it combine all this to form the chi square and add them
+
+
+
+
+#def bigshift(file): # computes the shift in a given parameter "par" leading to a systematic shift in fnl of deltafnl for a given data combination
+#    # file is the file to which we write the results
+#    
+#    #print "data here %s, shape here %s" % (datahere,shapehere)
+#    #file.write(print "data here %s, shape here %s" % (datahere,shapehere))
+#    
+#    #print "compute k and tri list"
+#    compute_list()
+#
+#    compute_pfid() # be sure they are assigned to have the variance
+#    
+#    if datahere == "P" :
+#        print("###### big shifts chi2 : P ######")
+#        file.write("----- data used: P ----- \n")
+#        
+#        a = map_to_list(chi2_p,klist,shift_list) # loads if already computed, esle computes it.
+#        
+#        chi2_p_sum = 0
+#        
+#        for i in range(len(klist)):
+#            chi2_p_sum += ( a[i][shift_list.index(par)] ) /var_p(klist[i]) # we have coefficient of ( Bsimple ng (fit) - B full gaussian (fid)) which is a polynomial in fnlfit, b1fit, b2fit. we form the coefficients of the chi2 which is ( B simple - Bfull)^2 / variance, summed. It's again a polynomial in fnlfit, b1fit, b2fit.
+#            
+#            
+#            print "solution(s) for shift %s :" % par
+#            print sol-fiducial[param.index(par)]
+#            print "delta fnl = %.3f" % deltafnl
+#            
+#            file.write("solution(s) for shift %s : \n" % par )
+#            (sol-fiducial[param.index(par)]).tofile(file, sep=", ", format="%s")
+#            file.write("\n")
+#            file.write("delta fnl = %.3f" % deltafnl)
+#            file.write("\n \n")
+#
+#    if datahere == "B" :
+#        for i in range(len(trianglelist)):
+#        chi2_b_sum += a0[i][shift_list.index(par)]*dbfid[i][param.index(par)]/Var2Factor(trianglelist[i][0],trianglelist[i][1],trianglelist[i][2])
+#    
+#    if datahere == "P+B":
 
 ###########################################
 ##  Systematic shifts OLD WAY, PRECISION? #
