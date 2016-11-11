@@ -434,6 +434,8 @@ for m in models :
 ########################################
 
             fishfun.shift(fsyst)
+            fsyst.write("\n")
+            fishfun.double_shift(fsyst)
         
 #            print "\n"
 #            print "############# one sigma systematic shift ###############"
