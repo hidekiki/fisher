@@ -64,15 +64,15 @@ allfiducial = [0.,1.51,0.00871,9.38,16.62,74.17,-15.17,-13.09,5.76,1.6]# 10^13 m
 
 # VALUE OF BNG FOR SQUEEZED POWER SPECTRUM
 
-#bng = -0.908122 # bng for simple model 10^12 mass
-#bng = 0.910357 # bng for full model 10^12 mass
-#bng = 0.00445277 # bng for simple model 10^13 mass
-bng = 2.58659 # bng for full model 10^13 mass
-#bng = 0.461619 # bng for simple model 10^14 mass
-#bng = 4.20369 # bng for full model 10^14 mass
+#(bng,s0,s1,s2) = (-0.908122,1.027,0.852,1.219) # bng for simple model 10^12 mass
+#(bng,s0,s1,s2) = (0.910357,1.027,0.852,1.219) # bng for full model 10^12 mass
+#(bng,s0,s1,s2) = (0.00445277, 0.715,0.311, 0.219) # bng for simple model 10^13 mass
+moments = (bng,s0,s1,s2) = (2.58659, 0.715,0.311, 0.219) # bng for full model 10^13 mass
+#(bng,s0,s1,s2) = (0.461619, 0.448,0.0990,0.0332) # bng for simple model 10^14 mass
+#(bng,s0,s1,s2) = (4.20369, 0.448,0.0990,0.0332) # bng for full model 10^14 mass
 
 # for simple model
-models=[[["equilateral",],["P","B","P+B"],[ 1.,1.,1.,0.,0.,0.,0.,0.,1.,1.],1.,0.16,bng]
+models=[[["equilateral",],["P","B","P+B"],[ 1.,1.,1.,1.,1.,1.,1.,1.,1.,1.],1.,0.16,moments]
         #,[["equilateral",],["P","B","P+B"],[ 1.,1., 1.,0.,0.,0.,0.,0., 1., 1.],1.,0.16,bng]
         ] #shape, data, parameters , n, kmax
 
@@ -93,8 +93,8 @@ for m in models :
     active = m[2] # choose which parameters to include in the model
     nn=m[3] #set n
     kkhigh = m[4] #set kmax
-    bngg = m[5]
-    fishfun.initialize(active, allfiducial, allpriors,nn,kkhigh,bngg); # initialization
+    mmoments = m[5]
+    fishfun.initialize(active, allfiducial, allpriors,nn,kkhigh,mmoments); # initialization
     fishfun.model_output()
     param = fishfun.param # for convienience
     fnlindex = param.index("fnl") #for convienience

@@ -47,17 +47,15 @@ allpriors = [0.,0.,0.,0.,0.,0.,0.,0.,0.,0.] # priors
 [fnlfid ,b10fid, b20fid, b01fid, b11fid, b02fid, chi1fid, w10fid, sigfid, Rfid]=allfiducial
 
 
-# all the models and combinations of data that we want to compute. for shape and data it's possible to specify more than 1 element : all combinations will be computed
-#models=[[["local",],["P","B","P+B"],[1., 1., 1., 1., 1., 1.,1., 1., 1., 1.],1.,0.16,"full"],
-#       [["equilateral",],["P","B","P+B"],[1., 1., 1., 1., 1., 1.,1., 1., 1., 1.],1.,0.16,"full"]
-#        ] #shape, data, parameters , n, kmax
+#moments =(bng,s0,s1,s2) = (-0.908122,1.027,0.852,1.219) # bng for simple model 10^12 mass
+#moments = (bng,s0,s1,s2) = (0.910357,1.027,0.852,1.219) # bng for full model 10^12 mass
+#moments =(bng,s0,s1,s2) = (0.00445277, 0.715,0.311, 0.219) # bng for simple model 10^13 mass
+moments = (bng,s0,s1,s2) = (2.58659, 0.715,0.311, 0.219) # bng for full model 10^13 mass
+#moments =(bng,s0,s1,s2) = (0.461619, 0.448,0.0990,0.0332) # bng for simple model 10^14 mass
+#moments =(bng,s0,s1,s2) = (4.20369, 0.448,0.0990,0.0332) # bng for full model 10^14 mass
 
-# all the models and combinations of data that we want to compute. for shape and data it's possible to specify more than 1 element : all combinations will be computed
-#models=[[["local",],["B","P+B"],[ 1.,1., 1.,1.,1.,1.,1.,1., 1., 1.],1.,0.16],
-        #[["equilateral",],["P","B","P+B"],[ 1.,1., 1.,0.,0.,0.,0.,0., 1., 1.],1.,0.16]
-#       ] #shape, data, parameters , n, kmax "P",
+models=[[["equilateral",],["P","B","P+B"],[1.,1.,1.,1.,1.,1.,1.,1.,1.,1.],1.,0.05,moments]]
 
-models=[[["equilateral",],["P","B","P+B"],[1.,1.,1.,1.,1.,1.,1.,1.,1.,1.],1.,0.05,0.666]]
 
 #########################
 #    Loop over models   #
@@ -68,20 +66,20 @@ for m in models :
     active = m[2] # choose which parameters to include in the model
     nn=m[3] #set n
     kkhigh = m[4] #set kmax
-    bngg = m[5] #bng for p squeezed
-    fishfun.initialize(active, allfiducial, allpriors,nn,kkhigh,bngg); # initialization
+    mmoments = m[5] #bng for p squeezed
+    fishfun.initialize(active, allfiducial, allpriors,nn,kkhigh,mmoments); # initialization
     fishfun.model_output()
     param = fishfun.param # for convienience
     fnlindex = param.index("fnl") #for convienience
-    
+
     ################################
     #    create relevant folders   #
     ################################
-    
+
     modelname = "model_"+"_".join(fishfun.param) #create model name
-    
+
     fishfun.modelhere = modelname
-    
+
     for shapeiter in shapenames: #  creating folders for results
         for dataiter in data :
             if not os.path.exists(modelname+"/"+dataiter+"/"+shapeiter):
@@ -98,7 +96,7 @@ for m in models :
 #    tick_size = 9.
 #    plt.rcParams['xtick.labelsize'] = tick_size
 #    plt.rcParams['ytick.labelsize'] = tick_size
-#    
+#
 #    alpha1 = np.sqrt(chi2.ppf(0.6827, 2, loc=0, scale=1)); # which ellipses to draw amount to multiply the eigenvalues
 #    alpha2 = np.sqrt(chi2.ppf(0.9545, 2, loc=0, scale=1));
 #    alpha3 = np.sqrt(chi2.ppf(0.9973, 2, loc=0, scale=1));
@@ -106,32 +104,32 @@ for m in models :
     ###############################
     # LOOP over shapes and fisher #
     ###############################
-    
+
     for chosenshape in shapenames :
-        
+
         fishfun.shapehere = chosenshape # setting the shape in the other file
-        
+
         print("\n")
         print("################  "+fishfun.shapehere+"  ################ \n") #here we use the print to be sure it has been correctly set
-        
+
         fsyst = open(modelname+'/systematic_shifts'+'_'+chosenshape+'.dat', 'w+') # opens a file where we print ouput of systematic shifts for all data
 
-        
+
         for chosendata in data :
-            
+
             fishfun.datahere = chosendata # setting the data used  in the other file
-            
+
             f = open(modelname+'/'+chosendata+'_'+chosenshape+'.dat', 'w+') # opens a file where we print all output
-            
+
             print "###### data used : "+fishfun.datahere+" ###### \n"
-            
+
             #from simplemodel import a_integrand
- 
+
             #print "param"
             #print fishfun.param
             #print "compute_shift_list"
             #fishfun.compute_shift_list()
-            
+
             #print "compute k and tri list"
             fishfun.compute_list()
             #print len(fishfun.klist)
@@ -143,20 +141,20 @@ for m in models :
 #            print fishfun.integrate_coeff(fishfun.a_integrand,1,0.1)
 #            print "test make mappable"
 #            print fishfun.make_mappable(simplemodel.a_integrand)(0.1)
-#            
+#
 #            print "test map_to_klist a_integrand"
 #            print fishfun.map_to_list(fishfun.a_integrand,fishfun.klist)
 #            print fishfun.map_to_list(fishfun.a0_integrand,fishfun.trianglelist[0:11])
 
 #            print "test coefficients_ps_par(par,a,b,c)"
-#            
+#
 #            kklist = fishfun.klist
 #
-#            
+#
 #            a = fishfun.map_to_list(fishfun.a_integrand,kklist)
 #            b = fishfun.map_to_list(fishfun.b_integrand,kklist)
 #            c = fishfun.map_to_list(fishfun.c_integrand,kklist)
-#            
+#
 
             # need dpfid
 #            fishfun.compute_dpfid()
@@ -173,26 +171,28 @@ for m in models :
 #            print len(fishfun.coeff_b_indices)
 #            print len(fishfun.coeff_p_names)
 #            print len(fishfun.coeff_b_names)
-#            
+#
 #            for ind in fishfun.coeff_b_indices:
 #                print chi2_delta_b((0.1,0.1,0.1),0.1,0.1,(fnlfid ,b10fid, b20fid, b01fid, b11fid, b02fid, chi1fid, w10fid, sigfid, Rfid),ind)
-#            
+#
 #            for ind in fishfun.coeff_p_indices:
 #                print chi2_delta_p(0.1,0.1,0.1,(fnlfid ,b10fid, b20fid, b01fid, b11fid, b02fid, chi1fid, w10fid, sigfid, Rfid),ind)
 
             fishfun.map_to_list(chi2_delta_p,fishfun.klist,fishfun.coeff_p_indices)
-            fishfun.map_to_list(chi2_delta_b,fishfun.trianglelist,fishfun.coeff_b_indices)
+
+            fishfun.map_to_list(chi2_delta_b,fishfun.trianglelist,fishfun.coeff_b_indices_1)
+
 
             #quit()
-            
+
             #fishfun.compute_pfid()
 #fishfun.dpkpar(0.1,"b10")
 #fishfun.DP_integrand(0.1,0.1,0.1,allfiducial,"b10")
 #       fishfun.compute_bfid() #compute ptotlsit for this shape
-          
+
           # print fishfun.B_integrand(fishfun.trianglelist[1],0.1,0.1,[fnlfid ,b10fid, b20fid, b01fid, b11fid, b02fid, chi1fid, w10fid, sigfid, Rfid])
           #fishfun.bkfid([0.1,0.1,0.1])
-        
+
 #            euclid = Survey(10**10,0.0004,0,0.16,1,1)
 #            print euclid.V
 #            print euclid.kmax
@@ -203,37 +203,37 @@ for m in models :
 
 
             if chosenshape == "local" :
-            
+
                 fsq = open(modelname+'/'+chosenshape+'_squeezed.dat', 'w+') # opens a file where we print all output
-                
+
                 print "###### data used : "+fishfun.datahere+" SQUEEZED ###### \n"
-                
-                
-                
+
+
+
 #                Fsq = fishfun.fisher_squeezed();
-#                
+#
 #                print Fsq
-#                
+#
 #                Fsqinv = linalg.inv(Fsq); #inverse
-#                
+#
 #                ######################################
 #                #  non marginalized errors on param  #
 #                ######################################
 #                print("######### non marg errors #########")
 #                fsq.write("######### non marg errors ######### \n")
-#                
+#
 #                for i in range(0, len(param)):
 #                    print "1-sigma error on %s, non marg : %f" % (param[i],1./np.sqrt(Fsq[i,i]))
 #                    fsq.write("1-sigma error on %s, non marg : %f \n" % (param[i],1./np.sqrt(Fsq[i,i])))
-#                
+#
 #                # fixing all parameter, it's a 1 param model, so factor is 1. for 1 sigma etc...
-#                
+#
 #                ######################################
 #                #    marginalized errors on param    #
 #                ######################################
 #                print("######### marg errors #########")
 #                fsq.write("######### marg errors ######### \n")
-#                
+#
 #                for i in range(0, len(param)):
 #                    print "1-sigma error on %s, marg over all other parameters : %f" % (param[i],1.*np.sqrt(Fsqinv[i,i]))
 #                    fsq.write("1-sigma error on %s, marg over all other parameters : %f \n" % (param[i],1.*np.sqrt(Fsqinv[i,i])))
@@ -241,24 +241,24 @@ for m in models :
 
 
 #            print fishfun.fisher()
-        
+
 #        F =fishfun.F_BB()
-#        
+#
 #        print F
 #
 #        print linalg.inv(F); #inverse
 
         #tri = [x for x in fishfun.trianglelist if x[0]==x[1] ]
-        
+
         #tri = [fishfun.trianglelist[i] for i in range(10) ]
-        
+
 #        tri =  [fishfun.trianglelist[i] for i in range(2) ]
 #
 #        for i in range(len(tri)): #
 #            print "triangle %i" % i
 #            print tri[i]
 #            print fishfun.DB(tri[i],'fnl')
-#        
+#
 # quit()
 
                 fsq.close()
