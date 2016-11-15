@@ -16,10 +16,7 @@ import os.path
 import vegas
 
 from extras import set_active, cartesian, interp_list, set_shift
-# importing relevant definitions
-from fullmodel import P_integrand, DP_integrand, B_integrand, DB_integrand, DP_sq_integrand, a_integrand, b_integrand, c_integrand, a0_integrand, a1_integrand, a2_integrand, a3_integrand, double_shift_abc, double_shift_a0123
-#from simplemodel import P_integrand, DP_integrand, B_integrand, DB_integrand, DP_sq_integrand, a_integrand, b_integrand, c_integrand, a0_integrand, a1_integrand, a2_integrand, a3_integrand
-from chi2 import chi2_delta_b, chi2_delta_p
+
 #import psutil # to see how many cores are allocated
 #ncores =  len(psutil.Process().cpu_affinity()) # for cluster
 ncores =  multiprocess.cpu_count() # for local
@@ -271,6 +268,14 @@ def compute_list():
         pointlistB = np.arange(klow,khigh,n*kf).tolist() # will be used in the sum for the PP fisher
         listraw = cartesian((pointlistB, pointlistB, pointlistB))
         trianglelist = [s for s in listraw if ((2*max(s[0],s[1],s[2]) <= s[0]+s[1]+s[2]) and (s[0]<=s[1]<=s[2])   )] # keep only triangle inequality and with sides ordered by increasing length
+
+####################################
+# import defintion for given model #
+####################################
+# importing relevant definitions
+from fullmodel import P_integrand, DP_integrand, B_integrand, DB_integrand, DP_sq_integrand, a_integrand, b_integrand, c_integrand, a0_integrand, a1_integrand, a2_integrand, a3_integrand, double_shift_abc, double_shift_a0123
+#from simplemodel import P_integrand, DP_integrand, B_integrand, DB_integrand, DP_sq_integrand, a_integrand, b_integrand, c_integrand, a0_integrand, a1_integrand, a2_integrand, a3_integrand
+from chi2 import chi2_delta_b, chi2_delta_p
 
 ###################
 # variance and pt #
@@ -1115,17 +1120,17 @@ coeff_p_names = ("constant","b20","b20^2","b10","b10b20","fnl","fnlb20","fnlb10"
 coeff_p_indices = ((0,0,0),(0,0,1),(0,0,2),(0,1,0),(0,1,1),(1,0,0),(1,0,1),(1,1,0),(1,1,1))
 
 coeff_b_names = ("constant","b20","b10","b10b20","b10^2","b10^2b20","b10^3","fnl","fnlb20","fnlb20^2","fnlb10","fnlb10b20","fnlb10b20^2","fnlb10^2","fnlb10^2b20","fnlb10^3")
-#coeff_b_indices = ((0,0,0),(0,0,1),(0,1,0),(0,1,1),(0,2,0),(0,2,1),(0,3,0),(1,0,0),(1,0,1),(1,0,2),(1,1,0),(1,1,1),(1,1,2),(1,2,0),(1,2,1),(1,3,0))
+coeff_b_indices = ((0,0,0),(0,0,1),(0,1,0),(0,1,1),(0,2,0),(0,2,1),(0,3,0),(1,0,0),(1,0,1),(1,0,2),(1,1,0),(1,1,1),(1,1,2),(1,2,0),(1,2,1),(1,3,0))
 
 # separating in 8 chunks for parallel evaluation
 coeff_b_indices_1 = ((0,0,0),(0,0,1))
-# coeff_b_indices_2 = ((0,1,0),(0,1,1))
-# coeff_b_indices_3 = ((0,2,0),(0,2,1))
-# coeff_b_indices_4 = ((0,3,0),(1,0,0))
-# coeff_b_indices_5 = ((1,0,1),(1,0,2))
-# coeff_b_indices_6 = ((1,1,0),(1,1,1))
-# coeff_b_indices_7 = ((1,1,2),(1,2,0))
-# coeff_b_indices_8 = ((1,2,1),(1,3,0))
+coeff_b_indices_2 = ((0,1,0),(0,1,1))
+coeff_b_indices_3 = ((0,2,0),(0,2,1))
+coeff_b_indices_4 = ((0,3,0),(1,0,0))
+coeff_b_indices_5 = ((1,0,1),(1,0,2))
+coeff_b_indices_6 = ((1,1,0),(1,1,1))
+coeff_b_indices_7 = ((1,1,2),(1,2,0))
+coeff_b_indices_8 = ((1,2,1),(1,3,0))
 # we can reuse previous function to map chi2_b and chi2_p to triangle_list and k_list
 # all what is left to do it combine all this to form the chi square and add them
 
