@@ -714,10 +714,13 @@ shift_indices=[]
 # create a list with only the parameters which we can solve for
 def compute_shift_list():
     global shift_list
+    global shift_indices
     shift_list = [ x for x in param if (x not in ['R','sig','fnl'] )]
     shift_indices = range(len(shift_list))
-    #print "shift_list"
-    #print shift_list
+    print "shift_list"
+    print shift_list
+    print "shift_indices"
+    print shift_indices
 
 def integrate_func_index(name_of_function,index,k,nev): # integrates the corresponding coefficient over q and x for given index (param) in shift list
     print datetime.datetime.now()
@@ -782,6 +785,8 @@ def map_to_list(name_of_function,list,index_list):
 
     if len(res) != len(list): # compute it
         yo = make_mappable(name_of_function,index_list)
+        # print "test"
+        # print yo(0.1)
         poolres = multiprocess.Pool(processes=ncores); # start a multiprocess
 ################# loop over chuncks and save
         for i in range(int((len(res)/chunksize)//1),1+int((len(list)/chunksize)//1)): #does not include the upper bound
@@ -801,12 +806,13 @@ def map_to_list(name_of_function,list,index_list):
 
             listhere = list[tmin:tmax+1] # returns the (tmin+1)th element of the list up to tmax'th element, tmax excluded
 
-            print "list here length %i" % len(listhere)
-
+            # print "list here length %i" % len(listhere)
+            # print "list here"
+            #print listhere
             reshere = poolres.map(yo,listhere)
 
-            #        print "res here"
-            #        print reshere
+            # print "res here"
+            # print reshere
 
             res += reshere
 
@@ -829,19 +835,20 @@ def coefficients_ps_par(par,a,b,c): # computes the coefficients of the quadratic
 
     #par = considered parameter
     # a, b, c = tables of the integrated a, b, c coefficients for each k in klist
-
-    parindex = shift_list.index(par) # index of current parameter
+    #print "hola"
+    #parindex = shift_list.index(par) # index of current parameter
     #print "par index %i" % parindex
 
     A = 0. # will collect the sum over the k's
     B = 0.
     C = 0.
 
-    #print "length a b c %i" % len(a)
-
-    #print "length dpfid %i" % len(dpfid)
+    # print "length a b c %i" % len(a)
+    # print "length klist %i" % len(klist)
+    # print "length dpfid %i" % len(dpfid)
 
     for i in range(len(klist)):
+        print i
         A += a[i][shift_list.index(par)]*dpfid[i][param.index(par)]/var_p(klist[i])
         B += b[i][shift_list.index(par)]*dpfid[i][param.index(par)]/var_p(klist[i])
         C += c[i][shift_list.index(par)]*dpfid[i][param.index(par)]/var_p(klist[i])
@@ -903,9 +910,9 @@ def shift(file): # computes the shift in a given parameter "par" leading to a sy
 
         compute_dpfid()
 
-        a = map_to_list(a_integrand,klist,shift_list) # loads if already computed, esle computes it.
-        b = map_to_list(b_integrand,klist,shift_list)
-        c = map_to_list(c_integrand,klist,shift_list)
+        a = map_to_list(a_integrand,klist,shift_indices) # loads if already computed, esle computes it.
+        b = map_to_list(b_integrand,klist,shift_indices)
+        c = map_to_list(c_integrand,klist,shift_indices)
 
         for par in shift_list:
 
@@ -929,10 +936,10 @@ def shift(file): # computes the shift in a given parameter "par" leading to a sy
 
         compute_dbfid()
 
-        a0 = map_to_list(a0_integrand,trianglelist,shift_list)
-        a1 = map_to_list(a1_integrand,trianglelist,shift_list)
-        a2 = map_to_list(a2_integrand,trianglelist,shift_list)
-        a3 = map_to_list(a3_integrand,trianglelist,shift_list)
+        a0 = map_to_list(a0_integrand,trianglelist,shift_indices)
+        a1 = map_to_list(a1_integrand,trianglelist,shift_indices)
+        a2 = map_to_list(a2_integrand,trianglelist,shift_indices)
+        a3 = map_to_list(a3_integrand,trianglelist,shift_indices)
 
         for par in shift_list:
 
@@ -956,14 +963,14 @@ def shift(file): # computes the shift in a given parameter "par" leading to a sy
         compute_dbfid()
         compute_dpfid()
 
-        a = map_to_list(a_integrand,klist,shift_list) # loads if already computed, esle computes it.
-        b = map_to_list(b_integrand,klist,shift_list)
-        c = map_to_list(c_integrand,klist,shift_list)
+        a = map_to_list(a_integrand,klist,shift_indices) # loads if already computed, esle computes it.
+        b = map_to_list(b_integrand,klist,shift_indices)
+        c = map_to_list(c_integrand,klist,shift_indices)
 
-        a0 = map_to_list(a0_integrand,trianglelist,shift_list)
-        a1 = map_to_list(a1_integrand,trianglelist,shift_list)
-        a2 = map_to_list(a2_integrand,trianglelist,shift_list)
-        a3 = map_to_list(a3_integrand,trianglelist,shift_list)
+        a0 = map_to_list(a0_integrand,trianglelist,shift_indices)
+        a1 = map_to_list(a1_integrand,trianglelist,shift_indices)
+        a2 = map_to_list(a2_integrand,trianglelist,shift_indices)
+        a3 = map_to_list(a3_integrand,trianglelist,shift_indices)
 
         for par in shift_list:
 
@@ -1012,9 +1019,9 @@ def double_shift(file): # computes the shift in a given parameter "par" leading 
 
         compute_dpfid()
 
-        a = map_to_list(a_integrand,klist,shift_list) # loads if already computed, esle computes it.
-        b = map_to_list(b_integrand,klist,shift_list)
-        c = map_to_list(c_integrand,klist,shift_list)
+        a = map_to_list(a_integrand,klist,shift_indices) # loads if already computed, esle computes it.
+        b = map_to_list(b_integrand,klist,shift_indices)
+        c = map_to_list(c_integrand,klist,shift_indices)
 
         for pars in double_shift_list: # pars contained the 2 parameter in consideration
 
@@ -1043,10 +1050,10 @@ def double_shift(file): # computes the shift in a given parameter "par" leading 
 
         compute_dbfid()
 
-        a0 = map_to_list(a0_integrand,trianglelist,shift_list)
-        a1 = map_to_list(a1_integrand,trianglelist,shift_list)
-        a2 = map_to_list(a2_integrand,trianglelist,shift_list)
-        a3 = map_to_list(a3_integrand,trianglelist,shift_list)
+        a0 = map_to_list(a0_integrand,trianglelist,shift_indices)
+        a1 = map_to_list(a1_integrand,trianglelist,shift_indices)
+        a2 = map_to_list(a2_integrand,trianglelist,shift_indices)
+        a3 = map_to_list(a3_integrand,trianglelist,shift_indices)
 
         for pars in double_shift_list: # pars contained the 2 parameter in consideration
 
@@ -1077,14 +1084,14 @@ def double_shift(file): # computes the shift in a given parameter "par" leading 
         compute_dbfid()
         compute_dpfid()
 
-        a = map_to_list(a_integrand,klist,shift_list) # loads if already computed, esle computes it.
-        b = map_to_list(b_integrand,klist,shift_list)
-        c = map_to_list(c_integrand,klist,shift_list)
+        a = map_to_list(a_integrand,klist,shift_indices) # loads if already computed, esle computes it.
+        b = map_to_list(b_integrand,klist,shift_indices)
+        c = map_to_list(c_integrand,klist,shift_indices)
 
-        a0 = map_to_list(a0_integrand,trianglelist,shift_list)
-        a1 = map_to_list(a1_integrand,trianglelist,shift_list)
-        a2 = map_to_list(a2_integrand,trianglelist,shift_list)
-        a3 = map_to_list(a3_integrand,trianglelist,shift_list)
+        a0 = map_to_list(a0_integrand,trianglelist,shift_indices)
+        a1 = map_to_list(a1_integrand,trianglelist,shift_indices)
+        a2 = map_to_list(a2_integrand,trianglelist,shift_indices)
+        a3 = map_to_list(a3_integrand,trianglelist,shift_indices)
 
         for pars in double_shift_list:
 
