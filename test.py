@@ -54,7 +54,7 @@ moments = (bng,s0,s1,s2) = (2.58659, 0.715,0.311, 0.219) # bng for full model 10
 #moments =(bng,s0,s1,s2) = (0.461619, 0.448,0.0990,0.0332) # bng for simple model 10^14 mass
 #moments =(bng,s0,s1,s2) = (4.20369, 0.448,0.0990,0.0332) # bng for full model 10^14 mass
 
-models=[[["equilateral",],["P","B","P+B"],[1.,1.,1.,1.,1.,1.,1.,1.,1.,1.],1.,0.05,moments]]
+models=[[["local",],["P","B","P+B"],[1.,1.,1.,1.,1.,1.,1.,1.,1.,1.],1.,0.16,moments]]
 
 
 #########################
@@ -113,7 +113,7 @@ for m in models :
         print("################  "+fishfun.shapehere+"  ################ \n") #here we use the print to be sure it has been correctly set
 
         fsyst = open(modelname+'/systematic_shifts'+'_'+chosenshape+'.dat', 'w+') # opens a file where we print ouput of systematic shifts for all data
-
+        fchi2 = open(modelname+'/chi2'+'_'+chosenshape+'.dat', 'w+') # opens a file where we print ouput of systematic shifts for all data
 
         for chosendata in data :
 
@@ -131,7 +131,7 @@ for m in models :
             #fishfun.compute_shift_list()
 
             #print "compute k and tri list"
-            fishfun.compute_list()
+            #fishfun.compute_list()
             #print len(fishfun.klist)
             #print len(fishfun.trianglelist)
 
@@ -178,9 +178,11 @@ for m in models :
 #            for ind in fishfun.coeff_p_indices:
 #                print chi2_delta_p(0.1,0.1,0.1,(fnlfid ,b10fid, b20fid, b01fid, b11fid, b02fid, chi1fid, w10fid, sigfid, Rfid),ind)
 
-            fishfun.map_to_list(chi2_delta_p,fishfun.klist,fishfun.coeff_p_indices)
+            #fishfun.map_to_list(chi2_delta_p,fishfun.klist,fishfun.coeff_p_indices)
 
-            fishfun.map_to_list(chi2_delta_b,fishfun.trianglelist,fishfun.coeff_b_indices_1)
+            fishfun.bigshift(fchi2)
+
+            #fishfun.map_to_list(chi2_delta_b,fishfun.trianglelist,fishfun.coeff_b_indices_1)
 
 
             #quit()

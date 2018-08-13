@@ -102,11 +102,11 @@ for m in models :
     ################################
     #    create relevant folders   #
     ################################
-    
+
     modelname = "model_"+"_".join(fishfun.param) #create model name
-    
+
     fishfun.modelhere = modelname
-    
+
     for shapeiter in shapenames: #  creating folders for results
         for dataiter in data :
             if not os.path.exists(modelname+"/"+dataiter+"/"+shapeiter):
@@ -133,25 +133,26 @@ for m in models :
     ###############################
 
     for chosenshape in shapenames :
-        
+
         fishfun.shapehere = chosenshape # setting the shape in the other file
-    
+
         print("\n")
         print("################  "+fishfun.shapehere+"  ################ \n") #here we use the print to be sure it has been correctly set
-        
+
         fsyst = open(modelname+'/syst_'+chosenshape+'.dat', 'w+') # opens a file where we print ouput of systematic shifts for all data
-        
+        fchi2 = open(modelname+'/chi2'+'_'+chosenshape+'.dat', 'w+') # opens a file where we print ouput of systematic shifts for all data
+
         for chosendata in data :
-            
+
             fishfun.datahere = chosendata # setting the data used  in the other file
-            
+
             f = open(modelname+'/'+chosendata+'_'+chosenshape+'.dat', 'w+') # opens a file where we print all output
-            
+
             print "###### data used : "+fishfun.datahere+" ###### \n"
-            
+
             F = fishfun.fisher();
             Finv = linalg.inv(F); #inverse
-            
+
             # eigen vectors and values of the inverse
             #w,v = linalg.eig(Finv);
             #print("eigen values of 1/F",w)
@@ -174,45 +175,45 @@ for m in models :
             ######################################
             print("######### marg errors #########")
             f.write("######### marg errors ######### \n")
-                     
+
             for i in range(0, len(param)):
                 print "1-sigma error on %s, marg over all other parameters : %f" % (param[i],1.*np.sqrt(Finv[i,i]))
                 f.write("1-sigma error on %s, marg over all other parameters : %f \n" % (param[i],1.*np.sqrt(Finv[i,i])))
             #for 1 parameter of interest, the factor is 1 for 1 sigma, 2 for 2 sigma etc...
-            
+
             ################################################
             #   marg error on fnl with sigma and R fixed   #
             ################################################
             indhere3 = [ x for x in range(len(param)) if x not in (param.index("sig"),param.index("R")) ] #indices which are not sigam and R
-            
+
             Fhere3 = np.zeros([len(param)-2,len(param)-2])
             # redefine fisher matrix without sigma and R
             for i in range(len(param)-2):
                 for j in range(len(param)-2):
                     Fhere3[i,j]=F[indhere3[i],indhere3[j]]
-        
+
             Finvhere3 = linalg.inv(Fhere3)
-            
+
             print "1-sigma error on fnl, marg over all param at fixed R and sigma: %f.2" % np.sqrt(Finvhere3[fnlindex,fnlindex])
             f.write("1-sigma error on fnl, marg over all param at fixed R and sigma: %f.2\n" % np.sqrt(Finvhere3[fnlindex,fnlindex]) )
-            
-            
+
+
             ##################################################
             #   marg error on fnl with sigma R b10 b20 fixed #
             ##################################################
-            
+
             list4 = (param.index("sig"), param.index("R"), param.index("b10"), param.index("b20"))
-            
+
             indhere4 = [ x for x in range(len(param)) if x not in list4 ] #indices which are not sigam R b10 b20
-            
+
             Fhere4 = np.zeros([len(param)-len(list4),len(param)-len(list4)])
             # redefine fisher matrix without sigma and R
             for i in range(len(param)-len(list4)):
                 for j in range(len(param)-len(list4)):
                     Fhere4[i,j]=F[indhere4[i],indhere4[j]]
-            
+
             Finvhere4 = linalg.inv(Fhere4)
-            
+
             print "1-sigma error on fnl, marg over all param at fixed b10, b20, R, sigma: %f.2" % np.sqrt(Finvhere4[fnlindex,fnlindex])
             f.write("1-sigma error on fnl, marg over all param at fixed b10, b20, R, sigma: %f.2\n" % np.sqrt(Finvhere4[fnlindex,fnlindex]))
 
@@ -220,7 +221,7 @@ for m in models :
             ############################
             #   ind1 and ind2 planes   #
             ############################
-            
+
             for ind1 in range(0,len(param)): # first index is always smaller than second, so ind1 is always first column, then ind2 is always second column
                 for ind2 in range(ind1+1,len(param)):
                     #print "ind1= %i, ind2= %i" % (ind1,ind2)
@@ -250,7 +251,7 @@ for m in models :
                     otherparamleg=namelist(paramleg,otherind);
 
                     #print(namelist(param,otherind))
-                    
+
                     #correlation coefficient for this pair of param. Finv of the full matrix, is it marg over the 3rd directino or not?
 
                     print "######### correlation coefficient %s - %s : %f \n" % (param[ind1],param[ind2],Finv[ind1,ind2]/np.sqrt(Finv[ind1,ind1]*Finv[ind2,ind2]))
@@ -261,31 +262,31 @@ for m in models :
                     #########################
                     print("######### %s - %s plane at FIXED%s #########" % (param[ind1],param[ind2],otherparam))
                     f.write("######### %s - %s plane at FIXED%s ######### \n" % (param[ind1],param[ind2],otherparam))
-                            
+
                     # redefine a fisher matrix with the two parameters that we look at, the others being at their fid values
                     Fhere = [[F[ind1,ind1],F[ind1, ind2]],[F[ind2, ind1],F[ind2, ind2]]];
-                    
+
                     #print("Fhere ",Fhere )
                     Finvhere  = linalg.inv(Fhere); #inverse F
-                    
+
                     #print("Finvhere ",Finvhere )
 
                     print "1-sigma error on %s, marg over %s at fixed%s: %f" % (param[ind1],param[ind2],otherparam,1.*np.sqrt(Finvhere[0,0]))
                     f.write("1-sigma error on %s, marg over %s at fixed%s: %f \n" % (param[ind1],param[ind2],otherparam,1.*np.sqrt(Finvhere[0,0])))
                     print "1-sigma error on %s, marg over %s at fixed%s: %f" % (param[ind2],param[ind1],otherparam,1.*np.sqrt(Finvhere[1,1]))
                     f.write("1-sigma error on %s, marg over %s at fixed%s: %f \n" % (param[ind2],param[ind1],otherparam,1.*np.sqrt(Finvhere[1,1])))
-                    
+
 #                    # eigen vectors and eigen values
 #                    where,vhere = linalg.eig(Finvhere);
 #
 #                    b4 = np.sqrt(where[0])
 #                    a4 = np.sqrt(where[1])
 #                    theta4a = 360/(2.*np.pi)*np.arctan2(vhere[1,0],vhere[0,0]); #angle of the ellipse: here we use the "four quadrant arctan" which gives the angle between the Ox axis and the line (0,0)-(x,y) where the arguements of the functions are (y,x)
-#                    
+#
 #                    #########################
 #                    # plotting the ellipses #
 #                    #########################
-#                    
+#
 #                    wc=4*np.sqrt(Finvhere[0,0]); # adjusting x and y axes of the plot
 #                    hc=4*np.sqrt(Finvhere[1,1]);
 #
@@ -313,13 +314,13 @@ for m in models :
 #                    plt.scatter(parfid1,parfid2) # center dot
 #                    #plt.show()
 #                    #pp.savefig(fig) #prints the fig to the pdf
-#                    
+#
 #                    ################################
 #                    #    MARGINALIZED OTHER PARAM  #
 #                    ################################
 #                    print("######### %s - %s plane MARGINALIZED over%s #########" % (param[ind1],param[ind2],otherparam))
 #                    f.write("######### %s - %s plane MARGINALIZED over%s ######### \n" % (param[ind1],param[ind2],otherparam))
-#                    
+#
 #                    #select the columns and lines corresponding to the parameters of interest
 #                    Finvhere2 = np.array([[Finv[ind1,ind1],Finv[ind1, ind2]],[Finv[ind2, ind1],Finv[ind2, ind2]]]);
 #                    Fhere2 = linalg.inv(Finvhere2)
@@ -328,7 +329,7 @@ for m in models :
 #                    f.write("1-sigma error on %s, marg over%s at fixed %s: %f \n" % (param[ind1],otherparam,param[ind2],1./np.sqrt(Fhere2[0,0])))
 #                    print "1-sigma error on %s, marg over%s at fixed %s: %f" % (param[ind2],otherparam,param[ind1],1./np.sqrt(Fhere2[1,1]))
 #                    f.write("1-sigma error on %s, marg over%s at fixed %s: %f \n" % (param[ind2],otherparam,param[ind1],1./np.sqrt(Fhere2[1,1])))
-#                    
+#
 #                    # eigen vectors and eigen values
 #                    where2,vhere2 = linalg.eig(Finvhere2);
 #
@@ -395,40 +396,40 @@ for m in models :
 
 
             if chosenshape == "local" :
-                
+
                 fsq = open(modelname+'/'+chosendata+'_'+chosenshape+'_squeezed.dat', 'w+') # opens a file where we print all output
 
                 print "\n"
                 print "###### data used : "+fishfun.datahere+" SQUEEZED ###### \n"
-            
+
                 Fsq = fishfun.fisher_squeezed();
                 Fsqinv = linalg.inv(Fsq); #inverse
-                
+
                 ######################################
                 #  non marginalized errors on param  #
                 ######################################
                 print("######### non marg errors #########")
                 fsq.write("######### non marg errors ######### \n")
-                        
+
                 for i in range(0, len(param)):
                     print "1-sigma error on %s, non marg : %f" % (param[i],1./np.sqrt(Fsq[i,i]))
                     fsq.write("1-sigma error on %s, non marg : %f \n" % (param[i],1./np.sqrt(Fsq[i,i])))
-                
+
                 # fixing all parameter, it's a 1 param model, so factor is 1. for 1 sigma etc...
-                        
+
                 ######################################
                 #    marginalized errors on param    #
                 ######################################
                 print("######### marg errors #########")
                 fsq.write("######### marg errors ######### \n")
-                
+
                 for i in range(0, len(param)):
                     print "1-sigma error on %s, marg over all other parameters : %f" % (param[i],1.*np.sqrt(Fsqinv[i,i]))
                     fsq.write("1-sigma error on %s, marg over all other parameters : %f \n" % (param[i],1.*np.sqrt(Fsqinv[i,i])))
                     #for 1 parameter of interest, the factor is 1 for 1 sigma, 2 for 2 sigma etc...
                 fsq.close()
             print("\n")
-    
+
 ########################################
 # for systematic shift in parameters   #
 ########################################
@@ -436,31 +437,33 @@ for m in models :
             fishfun.shift(fsyst)
             fsyst.write("\n")
             fishfun.double_shift(fsyst)
-        
+
+            fishfun.bigshift(fchi2)
+
 #            print "\n"
 #            print "############# one sigma systematic shift ###############"
 #            f.write("############# one sigma systematic shift ###############\n")
-#            
+#
 #            for shiftedparam in  [x for x in param if x != "fnl"] :# vary each parameter which is not fnl
-#                
+#
 #                print("################  varying %s  ################" % shiftedparam )
-#                
+#
 #                fnlindex = param.index("fnl") #for convienience
-#                
+#
 #                shiftedfid = fishfun.fiducial[param.index(shiftedparam)]#fid value of the shifted param
-#                
+#
 #                #factorlist = fishfun.compute_fnlshift_list(shiftedparam) #factors of fnl
-#                
+#
 #                deltafnllist = fishfun.compute_fnlshift_list(shiftedparam)
-#                
+#
 #                #deltafnllist = [Finv[param.index(shiftedparam),fnlindex] * x for x in factorlist];  #  list of shifted values of fnl when shifting the values of "shiftedparam" to the values in interp_list(fiducial[param.index(shiftedparam)])
-#            
+#
 #                parametervalues = fishfun.interp_list(shiftedparam) # jsut for plotting
-#                
+#
 #                #print("#############  systematic shifts ###############")
 #                #print("shift in b01 from %f to %f produces a shift in fnl %s of %f while fnl marg is %f " % (fiducial[b01index], b01shift, chosenshape , shiftedfnlfactor, np.sqrt(Finv[fnlindex,fnlindex])))
 #                #f.write("shift in b01 from %f to %f produces a shift in fnl %s of %f while fnl marg is %f " % (fiducial[b01index], b01shift, chosenshape ,shiftedfnlfactor, np.sqrt(Finv[fnlindex,fnlindex])))
-#                
+#
 #                # interpolated the list of delta fnl as function of shift
 #                deltafnl = interpolate.splrep(parametervalues, deltafnllist) #cubic spline interpolation of scipy
 #
@@ -475,10 +478,10 @@ for m in models :
 #
 #                #find where deltafnl is equal to fnl marg
 #                onesigmafnl = np.sqrt(Finv[param.index("fnl"),fnlindex])
-#                
+#
 #                def zerofnl(shift) :
 #                    return  interpolate.splev(shift, deltafnl)-onesigmafnl
-#                
+#
 ##                xnew = np.arange(min(parametervalues),max(parametervalues),(max(parametervalues)-min(parametervalues))/100) # new finer k list values where to evaluate for the figure
 ##                ynewcub = interpolate.splev(xnew, deltafnl) # evaluation of the interpolated p(k) at these points
 ##                plt.figure()
@@ -507,6 +510,7 @@ for m in models :
             f.close()
         print("\n")
         fsyst.close()
+        fchi2.close()
     print("\n")
 print datetime.datetime.now()
 print("############ DONE ############ \n")

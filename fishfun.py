@@ -275,7 +275,7 @@ def compute_list():
 # importing relevant definitions
 from fullmodel import P_integrand, DP_integrand, B_integrand, DB_integrand, DP_sq_integrand, a_integrand, b_integrand, c_integrand, a0_integrand, a1_integrand, a2_integrand, a3_integrand, double_shift_abc, double_shift_a0123
 #from simplemodel import P_integrand, DP_integrand, B_integrand, DB_integrand, DP_sq_integrand, a_integrand, b_integrand, c_integrand, a0_integrand, a1_integrand, a2_integrand, a3_integrand
-from chi2 import chi2_delta_b, chi2_delta_p
+from chi2 import chi2_delta_p, chi2_delta_b, chi2_coeff_p, chi2_coeff_b
 
 ###################
 # variance and pt #
@@ -1142,36 +1142,65 @@ coeff_b_indices_8 = ((1,2,1),(1,3,0))
 # all what is left to do it combine all this to form the chi square and add them
 
 
-# def bigshift(file): # computes the shift in a given parameter "par" leading to a systematic shift in fnl of deltafnl for a given data combination
-#     # file is the file to which we write the results
-#
-#     #print "data here %s, shape here %s" % (datahere,shapehere)
-#     #file.write(print "data here %s, shape here %s" % (datahere,shapehere))
-#
-#     #print "compute k and tri list"
-#     compute_list()
-#
-#     compute_pfid() # be sure they are assigned to have the variance
-#
-#     if datahere == "P" :
-#         print("###### big shifts chi2 : P ######")
-#         file.write("----- data used: P ----- \n")
-#
-#         a = map_to_list(chi2_p,klist,shift_list) # loads if already computed, esle computes it.
-#
-#         chi2_p_sum = 0
-#
-#         for i in range(len(klist)):
-#             chi2_p_sum +=  # we have coefficient of ( Bsimple ng (fit) - B full gaussian (fid)) which is a polynomial in fnlfit, b1fit, b2fit. we form the coefficients of the chi2 which is ( B simple - Bfull)^2 / variance, summed. It's again a polynomial in fnlfit, b1fit, b2fit.
-#
-#             file.write("solution(s) for shift %s : \n" % par )
-#             (sol-fiducial[param.index(par)]).tofile(file, sep=", ", format="%s")
-#             file.write("\n")
-#             file.write("delta fnl = %.3f" % deltafnl)
-#             file.write("\n \n")
-#
-#     if datahere == "B" :
-#         for i in range(len(trianglelist)):
-#         chi2_b_sum += a0[i][shift_list.index(par)]*dbfid[i][param.index(par)]/Var2Factor(trianglelist[i][0],trianglelist[i][1],trianglelist[i][2])
-#
-#     if datahere == "P+B":
+
+def bigshift(file): # computes the coefficients of the chi2
+    # file is the file to which we write the results
+
+    print "data here %s, shape here %s" % (datahere,shapehere)
+    file.write("data here %s, shape here %s" % (datahere,shapehere))
+
+    #print "compute k and tri list"
+    compute_list()
+
+    compute_pfid() # be sure they are assigned to have the variance
+
+    if datahere == "P" :
+        delta_coeff = map_to_list(chi2_delta_p,klist,coeff_p_indices)
+
+        chi2_prelist = map(chi2_coeff_p,delta_coeff)
+        # print len(chi2_prelist)
+        # print len(chi2_prelist[0])
+        # print len(chi2_prelist[0][0])
+        # print len(chi2_prelist[0][0][0])
+
+        chi2_coeff = np.zeros((len(chi2_prelist[0]),len(chi2_prelist[0][0]),len(chi2_prelist[0][0][0])))
+        # divide by the variance and sum
+        for i in range(len(chi2_prelist)):
+            #print chi2_prelist[i]/var_p(klist[i])
+            chi2_coeff += chi2_prelist[i]/var_p(klist[i])
+
+        # print "result"
+        # print len(chi2_coeff)
+        # print len(chi2_coeff[0])
+        # print len(chi2_coeff[0][0])
+
+        print "table of coefficients for chi2 with p"
+        print chi2_coeff
+
+        print >> file, "table of coefficients for chi2 with p \n", repr(chi2_coeff)
+
+
+    if datahere == "B" :
+        delta_coeff = map_to_list(chi2_delta_b,trianglelist,coeff_b_indices)
+
+        chi2_prelist = map(chi2_coeff_b,delta_coeff)
+        # print len(chi2_prelist)
+        # print len(chi2_prelist[0])
+        # print len(chi2_prelist[0][0])
+        # print len(chi2_prelist[0][0][0])
+
+        chi2_coeff = np.zeros((len(chi2_prelist[0]),len(chi2_prelist[0][0]),len(chi2_prelist[0][0][0])))
+        # divide by the variance and sum
+        for i in range(len(chi2_prelist)):
+            #print chi2_prelist[i]/var_p(klist[i])
+            chi2_coeff += chi2_prelist[i]/var_b(trianglelist[i][0],trianglelist[i][1],trianglelist[i][2])
+
+        # print "result"
+        # print len(chi2_coeff)
+        # print len(chi2_coeff[0])
+        # print len(chi2_coeff[0][0])
+
+        print "table of coefficients for chi2 with b"
+        print chi2_coeff
+
+        print >> file, "table of coefficients for chi2 with b \n", repr(chi2_coeff)
