@@ -437,9 +437,14 @@ for m in models :
             fishfun.shift(fsyst)
             fsyst.write("\n")
             fishfun.double_shift(fsyst)
+<<<<<<< HEAD
 
             fishfun.bigshift(fchi2)
 
+=======
+            fishfun.bigshift(fchi2)
+            
+>>>>>>> master
 #            print "\n"
 #            print "############# one sigma systematic shift ###############"
 #            f.write("############# one sigma systematic shift ###############\n")

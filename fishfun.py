@@ -7,6 +7,8 @@
 import numpy as np
 from numpy import linalg, pi, sin
 from scipy import interpolate
+
+#import multiprocessing
 import multiprocess # BETTER THAN MULTIPROCESSING
 import datetime
 from tempfile import TemporaryFile
@@ -286,7 +288,6 @@ def var_b(k1,k2,k3): #only the factor to be able to take the b1 derivativ in the
     elif k1 == k2 != k3 or k1 == k3 != k2 or k2 == k3 != k1 : trianglevar = 2.;
     else : trianglevar = 6. ;
     return (2*np.pi)**3 * trianglevar*(pfid[klist.index(k1)]*pfid[klist.index(k2)]*pfid[klist.index(k3)]) / (8. * np.pi**2 * n**3 * k1* k2*k3);
-
 
 ###########################
 # one loop Power spectrum #

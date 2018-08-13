@@ -163,6 +163,11 @@ for m in models :
 #            Finv = linalg.inv(F); #inverse
 
             #fishfun.coefficients_ps_par("b10",a,b,c,0.1,Finv)
+
+            print "test fishfun.double_shift "
+            fishfun.double_shift(fsyst)
+            
+
 #            print "test fishfun.shift "
 #            fishfun.shift(fsyst)
 
