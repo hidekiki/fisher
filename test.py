@@ -56,12 +56,6 @@ moments = (bng,s0,s1,s2) = (2.58659, 0.715,0.311, 0.219) # bng for full model 10
 
 models=[[["local",],["P","B","P+B"],[1.,1.,1.,1.,1.,1.,1.,1.,1.,1.],1.,0.16,moments]]
 
-<<<<<<< HEAD
-moments = (bng,s0,s1,s2) = (2.58659, 0.715,0.311, 0.219)
-
-models=[[["equilateral",],["P","B","P+B"],[1.,1.,1.,1.,1.,1.,1.,1.,1.,1.],1.,0.16,moments]]
-=======
->>>>>>> simple-full-fit
 
 #########################
 #    Loop over models   #
@@ -169,11 +163,11 @@ for m in models :
 #            Finv = linalg.inv(F); #inverse
 
             #fishfun.coefficients_ps_par("b10",a,b,c,0.1,Finv)
-<<<<<<< HEAD
+
             print "test fishfun.double_shift "
             fishfun.double_shift(fsyst)
             
-=======
+
 #            print "test fishfun.shift "
 #            fishfun.shift(fsyst)
 
@@ -196,7 +190,6 @@ for m in models :
             #fishfun.map_to_list(chi2_delta_b,fishfun.trianglelist,fishfun.coeff_b_indices_1)
 
 
->>>>>>> simple-full-fit
             #quit()
 
             #fishfun.compute_pfid()

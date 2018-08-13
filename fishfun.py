@@ -945,7 +945,6 @@ def shift(file): # computes the shift in a given parameter "par" leading to a sy
         for par in shift_list:
 
             coe = coefficients_bis_par(par,a0,a1,a2,a3)
-            
             sol = np.roots([coe[3],coe[2],coe[1],coe[0]-deltafnl/Finv[param.index("fnl"),param.index(par)]])
 
             print "solution(s) for shift %s :" % par
